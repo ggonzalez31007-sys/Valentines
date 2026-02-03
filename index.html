@@ -7,8 +7,8 @@
         body {
             margin: 0;
             background: #ffb6c1;
-            font-family: 'Comic Sans MS', cursive, sans-serif;
             overflow: hidden;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
         }
 
         #startScreen {
@@ -50,12 +50,10 @@
     <script src="main.js"></script>
 
     <script>
-        // Remove overlay after Phaser canvas is ready
         const startScreen = document.getElementById('startScreen');
-
         window.addEventListener('keydown', function(event) {
             if(event.code === 'Enter') {
-                startScreen.remove(); // remove completely
+                startScreen.remove();
             }
         });
     </script>
