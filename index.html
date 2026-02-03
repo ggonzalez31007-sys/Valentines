@@ -6,7 +6,7 @@
     <style>
         body {
             margin: 0;
-            background: #ffb6c1; /* pink background */
+            background: #ffb6c1; /* pink fallback */
             font-family: 'Comic Sans MS', cursive, sans-serif;
             overflow: hidden;
         }
@@ -18,7 +18,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 182, 193, 0.6); /* semi-transparent overlay */
+            background: rgba(255, 182, 193, 0.6); /* semi-transparent pink overlay */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -37,11 +37,9 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.2);
         }
 
-        /* Phaser canvas */
         canvas {
-            position: relative;
-            z-index: 5; /* below the start screen until removed */
             display: block;
+            margin: 0 auto;
         }
     </style>
 </head>
@@ -56,7 +54,7 @@
     <!-- Phaser library -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.js"></script>
 
-    <!-- Your main game code -->
+    <!-- Main game code -->
     <script src="main.js"></script>
 
     <script>
@@ -65,9 +63,7 @@
 
         window.addEventListener('keydown', function(event) {
             if(event.code === 'Enter') {
-                // Hide overlay and allow interaction with game
-                startScreen.style.display = 'none';
-                startScreen.style.pointerEvents = 'none';
+                startScreen.remove(); // completely remove overlay
             }
         });
     </script>
