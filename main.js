@@ -3,12 +3,11 @@ const config = {
     parent: 'game-container',
     width: 800,
     height: 600,
-    backgroundColor: '#ffb6c1', // hot pink = Phaser is alive
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 1000 },
-            debug: true // 👈 SHOW PHYSICS BODIES
+            gravity: { y: 1200 },
+            debug: false
         }
     },
     scene: {
@@ -18,48 +17,44 @@ const config = {
     }
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
 
 let player;
 let cursors;
-let ground;
+let platforms;
 
 function preload() {
-    console.log('PRELOAD STARTED');
+    // BACKGROUND
+    this.load.image('background', 'assets_characters/background/background.png');
 
-    this.load.image(
-        'platform',
-        'asset folder/characters/platforms/platform.png'
-    );
+    // PLATFORM
+    this.load.image('platform', 'assets_characters/platforms/platform.png');
 
-    this.load.image(
-        'kitty',
-        'asset folder/characters/hello-kitty.png'
-    );
+    // PLAYER
+    this.load.image('kitty', 'assets_characters/hello-kitty.png');
 }
 
 function create() {
-    console.log('CREATE STARTED');
+    // BACKGROUND
+    this.add.image(400, 300, 'background');
 
-    // BIG RED DEBUG LINE (GROUND LOCATION)
-    const graphics = this.add.graphics();
-    graphics.lineStyle(4, 0xff0000);
-    graphics.lineBetween(0, 520, 800, 520);
+    // MARIO-STYLE GROUND
+    platforms = this.physics.add.staticGroup();
 
-    // GROUND
-    ground = this.physics.add.staticGroup();
-    ground.create(400, 550, 'platform')
-        .setScale(10, 1)
-        .refreshBody();
+    // Create a full row of platforms along the bottom
+    const tileWidth = 64; // adjust to match your platform.png width
+    for (let x = 0; x < 800; x += tileWidth) {
+        platforms.create(x + tileWidth / 2, 568, 'platform'); // y = 568 so player stands on it
+    }
 
-    // PLAYER DEBUG BOX (EVEN IF IMAGE FAILS)
-    player = this.physics.add.sprite(200, 200, 'kitty');
-    player.setDisplaySize(64, 64); // FORCE VISIBILITY
-    player.setTint(0xffffff);      // ENSURE NOT TRANSPARENT
+    // PLAYER
+    player = this.physics.add.sprite(100, 450, 'kitty');
     player.setCollideWorldBounds(true);
 
-    this.physics.add.collider(player, ground);
+    // COLLISION
+    this.physics.add.collider(player, platforms);
 
+    // INPUT
     cursors = this.input.keyboard.createCursorKeys();
 }
 
@@ -69,11 +64,11 @@ function update() {
     player.setVelocityX(0);
 
     if (cursors.left.isDown) {
-        player.setVelocityX(-200);
+        player.setVelocityX(-250);
+    } else if (cursors.right.isDown) {
+        player.setVelocityX(250);
     }
-    if (cursors.right.isDown) {
-        player.setVelocityX(200);
-    }
+
     if (cursors.up.isDown && player.body.blocked.down) {
         player.setVelocityY(-500);
     }
