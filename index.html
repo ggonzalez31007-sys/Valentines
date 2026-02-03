@@ -1,32 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Hello Kitty Platformer</title>
+  <meta charset="UTF-8" />
+  <title>Sanrio Platformer</title>
 
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background: #ffffff; /* outside the pink border */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+  <style>
+    body {
+      margin: 0;
+      background: #ffd1dc; /* soft pink border */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-        canvas {
-            display: block;
-            border: 16px solid #ff6fa8; /* your pink border */
-            background: #ffffff;       /* inside border, outside menu */
-        }
-    </style>
+    #game-container {
+      background: white;
+      padding: 12px;
+      border: 8px solid #ff8fab;
+      box-sizing: content-box;
+    }
+  </style>
 </head>
+
 <body>
+  <div id="game-container"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
-<script src="main.js"></script>
+  <!-- PHASER -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
 
+  <!-- MAIN GAME FILE -->
+  <script src="main.js?v=RESET"></script>
 </body>
 </html>
