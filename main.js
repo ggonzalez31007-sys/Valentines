@@ -3,12 +3,10 @@ const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
+    backgroundColor: 0xffb6c1, // pink background
     physics: {
         default: 'arcade',
-        arcade: { 
-            gravity: { y: 500 },
-            debug: true // shows collision boxes
-        }
+        arcade: { gravity: { y: 500 }, debug: false } // no debug boxes
     },
     scene: {
         preload: preload,
@@ -17,7 +15,7 @@ const config = {
     }
 };
 
-// Create Phaser game instance
+// Create Phaser game
 const game = new Phaser.Game(config);
 
 // ----- Global variables -----
@@ -37,10 +35,10 @@ const maxJumpTime = 300; // max ms you can hold jump
 function preload() {
     // Background
     this.load.image('background', 'assets/backgrounds/background.png');
-    
+
     // Platforms
     this.load.image('platform', 'assets/platforms/platform.png');
-    
+
     // Player
     this.load.spritesheet('kitty', 'assets/characters/hello-kitty.png', {
         frameWidth: 32,
@@ -53,17 +51,17 @@ function preload() {
 
 // ----- Create game objects -----
 function create() {
-    // --- Background ---
+    // Background
     background = this.add.image(400, 300, 'background');
     background.setOrigin(0.5, 0.5);
 
-    // --- Platforms ---
+    // Platforms
     platforms = this.physics.add.staticGroup();
     platforms.create(400, 580, 'platform').setScale(2).refreshBody(); // ground
     platforms.create(200, 450, 'platform'); // floating
     platforms.create(600, 350, 'platform'); // floating
 
-    // --- Player ---
+    // Player
     player = this.physics.add.sprite(100, 500, 'kitty');
     player.setCollideWorldBounds(true);
 
@@ -74,11 +72,10 @@ function create() {
         repeat: -1
     });
 
-    // Collisions
     this.physics.add.collider(player, platforms);
 
-    // --- Keroppi ---
-    keroppi = this.physics.add.staticSprite(600, 520, 'keroppi'); // on ground
+    // Keroppi
+    keroppi = this.physics.add.staticSprite(600, 520, 'keroppi');
     keroppiText = this.add.text(keroppi.x, keroppi.y - 50, "Find your boyfriend!", {
         fontSize: '24px',
         color: '#ffffff',
@@ -86,7 +83,7 @@ function create() {
         padding: { x: 10, y: 5 }
     }).setOrigin(0.5).setVisible(false);
 
-    // --- Input ---
+    // Input keys
     cursors = this.input.keyboard.addKeys({
         left: Phaser.Input.Keyboard.KeyCodes.A,
         right: Phaser.Input.Keyboard.KeyCodes.D,
@@ -97,7 +94,7 @@ function create() {
 
 // ----- Game loop -----
 function update() {
-    // --- Player horizontal movement ---
+    // Horizontal movement
     let speed = cursors.sprint.isDown ? 320 : 160;
     player.setVelocityX(0);
 
@@ -113,32 +110,25 @@ function update() {
         player.anims.stop();
     }
 
-    // --- Variable jump logic ---
-    // Start jump
+    // Variable jump
     if (cursors.jump.isDown && player.body.touching.down && !isJumping) {
-        player.setVelocityY(-330); // initial jump velocity
+        player.setVelocityY(-330); // initial jump
         isJumping = true;
         jumpTime = 0;
     }
 
-    // Continue jump while holding Space and within maxJumpTime
     if (cursors.jump.isDown && isJumping) {
-        jumpTime += this.game.loop.delta; // time since last frame
+        jumpTime += this.game.loop.delta;
         if (jumpTime < maxJumpTime) {
-            player.setVelocityY(-330); // maintain upward velocity
+            player.setVelocityY(-330); // continue upward while holding
         }
     }
 
-    // Stop jump when key released
     if (cursors.jump.isUp) {
         isJumping = false;
     }
 
-    // --- Keroppi text trigger ---
+    // Keroppi text trigger
     let distance = Phaser.Math.Distance.Between(player.x, player.y, keroppi.x, keroppi.y);
-    if (distance < 100) { // show text if close
-        keroppiText.setVisible(true);
-    } else {
-        keroppiText.setVisible(false);
-    }
+    keroppiText.setVisible(distance < 100);
 }
