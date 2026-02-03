@@ -6,60 +6,52 @@ const config = {
     backgroundColor: 0xffb6c1, // pink background
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 500 }, debug: false } // no debug boxes
+        arcade: { gravity: { y: 500 }, debug: false }
     },
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    }
+    scene: { preload, create, update }
 };
 
-// Create Phaser game
 const game = new Phaser.Game(config);
 
 // ----- Global variables -----
-let player;
-let cursors;
-let platforms;
-let background;
-let keroppi;
-let keroppiText;
-
-// Variable jump
-let isJumping = false;
-let jumpTime = 0;
-const maxJumpTime = 300; // max ms you can hold jump
+let player, cursors, platforms, background, keroppi, keroppiText;
+let isJumping = false, jumpTime = 0, maxJumpTime = 300;
 
 // ----- Preload assets -----
 function preload() {
     // Background
-    this.load.image('background', 'assets/backgrounds/background.png');
+    this.load.image('background', 'assets/background/background.png');
 
     // Platforms
     this.load.image('platform', 'assets/platforms/platform.png');
 
     // Player
-    this.load.spritesheet('kitty', 'assets/characters/hello-kitty.png', {
-        frameWidth: 32,
-        frameHeight: 48
-    });
+    this.load.spritesheet('kitty', 'assets/characters/hello-kitty.png', { frameWidth: 32, frameHeight: 48 });
 
     // Keroppi
     this.load.image('keroppi', 'assets/characters/kerropi.png');
+
+    // Blocks
+    this.load.image('capyblock', 'assets/blocks/capyblock.png');
+    this.load.image('powerup', 'assets/blocks/powerup.png');
+
+    // Powerups
+    this.load.image('berry', 'assets/powerups/berry.png');
+
+    // Enemies
+    this.load.image('evilCupcake', 'assets/enemies/evil-cupcake.png');
 }
 
 // ----- Create game objects -----
 function create() {
     // Background
     background = this.add.image(400, 300, 'background');
-    background.setOrigin(0.5, 0.5);
 
     // Platforms
     platforms = this.physics.add.staticGroup();
     platforms.create(400, 580, 'platform').setScale(2).refreshBody(); // ground
-    platforms.create(200, 450, 'platform'); // floating
-    platforms.create(600, 350, 'platform'); // floating
+    platforms.create(200, 450, 'platform');
+    platforms.create(600, 350, 'platform');
 
     // Player
     player = this.physics.add.sprite(100, 500, 'kitty');
@@ -99,11 +91,11 @@ function update() {
     let speed = cursors.sprint.isDown ? 320 : 160;
     player.setVelocityX(0);
 
-    if (cursors.left.isDown) {
+    if(cursors.left.isDown) {
         player.setVelocityX(-speed);
         player.anims.play('walk', true);
         player.setFlipX(true);
-    } else if (cursors.right.isDown) {
+    } else if(cursors.right.isDown) {
         player.setVelocityX(speed);
         player.anims.play('walk', true);
         player.setFlipX(false);
@@ -111,25 +103,21 @@ function update() {
         player.anims.stop();
     }
 
-    // Variable jump
-    if (cursors.jump.isDown && player.body.touching.down && !isJumping) {
+    // Variable jump (hold Space to jump higher)
+    if(cursors.jump.isDown && player.body.touching.down && !isJumping) {
         player.setVelocityY(-330); // initial jump
         isJumping = true;
         jumpTime = 0;
     }
 
-    if (cursors.jump.isDown && isJumping) {
-        jumpTime += this.sys.game.loop.delta; // fixed variable jump
-        if (jumpTime < maxJumpTime) {
-            player.setVelocityY(-330); // continue upward while holding
-        }
+    if(cursors.jump.isDown && isJumping) {
+        jumpTime += this.sys.game.loop.delta; // correct scene reference
+        if(jumpTime < maxJumpTime) player.setVelocityY(-330);
     }
 
-    if (cursors.jump.isUp) {
-        isJumping = false;
-    }
+    if(cursors.jump.isUp) isJumping = false;
 
     // Keroppi text trigger
-    let distance = Phaser.Math.Distance.Between(player.x, player.y, keroppi.x, keroppi.y);
-    keroppiText.setVisible(distance < 100);
+    let dist = Phaser.Math.Distance.Between(player.x, player.y, keroppi.x, keroppi.y);
+    keroppiText.setVisible(dist < 100);
 }
