@@ -1,77 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Sanrio Platformer 💗</title>
-
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+    <meta charset="UTF-8">
+    <title>Hello Kitty Platformer</title>
 
     <style>
-        body {
+        html, body {
             margin: 0;
-            background: #ffd6e7;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff; /* outside the pink border */
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-        }
-
-        #game-container {
-            position: relative;
-            width: 800px;
-            height: 600px;
         }
 
         canvas {
             display: block;
-            border: 8px solid #ff9fbf;
-        }
-
-        #menu {
-            position: absolute;
-            width: 800px;
-            height: 600px;
-            top: 0;
-            left: 0;
-            background: rgba(255, 214, 231, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-
-        #menu-box {
-            background: #ffa4b8;
-            color: white;
-            padding: 32px 44px;
-            border-radius: 20px;
-            font-size: 24px;
-            text-align: center;
+            border: 16px solid #ff6fa8; /* your pink border */
+            background: #ffffff;       /* inside border, outside menu */
         }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div id="menu">
-        <div id="menu-box">
-            💕 Hey Gorgeous! 💕<br><br>
-            Press <b>Enter</b> To Start!
-        </div>
-    </div>
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
 <script src="main.js"></script>
-
-<script>
-    window.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            const menu = document.getElementById("menu");
-            if (menu) menu.style.display = "none";
-        }
-    });
-</script>
 
 </body>
 </html>
