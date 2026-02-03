@@ -1,13 +1,14 @@
 const config = {
     type: Phaser.AUTO,
-    parent: 'game-container', // CRITICAL
+    parent: 'game-container',
     width: 800,
     height: 600,
+    backgroundColor: '#ffb6c1', // hot pink = Phaser is alive
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 1200 },
-            debug: false
+            gravity: { y: 1000 },
+            debug: true // 👈 SHOW PHYSICS BODIES
         }
     },
     scene: {
@@ -17,17 +18,14 @@ const config = {
     }
 };
 
-const game = new Phaser.Game(config);
+new Phaser.Game(config);
 
 let player;
 let cursors;
 let ground;
 
 function preload() {
-    this.load.image(
-        'background',
-        'asset folder/characters/background/background.png'
-    );
+    console.log('PRELOAD STARTED');
 
     this.load.image(
         'platform',
@@ -41,21 +39,23 @@ function preload() {
 }
 
 function create() {
-    // Background
-    this.add.image(400, 300, 'background');
+    console.log('CREATE STARTED');
 
-    // Ground (Mario-style, long)
+    // BIG RED DEBUG LINE (GROUND LOCATION)
+    const graphics = this.add.graphics();
+    graphics.lineStyle(4, 0xff0000);
+    graphics.lineBetween(0, 520, 800, 520);
+
+    // GROUND
     ground = this.physics.add.staticGroup();
+    ground.create(400, 550, 'platform')
+        .setScale(10, 1)
+        .refreshBody();
 
-    for (let x = 0; x <= 1600; x += 64) {
-        ground.create(x, 540, 'platform')
-            .setOrigin(0, 0)
-            .refreshBody();
-    }
-
-    // Player (GUARANTEED visible)
-    player = this.physics.add.sprite(100, 300, 'kitty');
-    player.setScale(1);
+    // PLAYER DEBUG BOX (EVEN IF IMAGE FAILS)
+    player = this.physics.add.sprite(200, 200, 'kitty');
+    player.setDisplaySize(64, 64); // FORCE VISIBILITY
+    player.setTint(0xffffff);      // ENSURE NOT TRANSPARENT
     player.setCollideWorldBounds(true);
 
     this.physics.add.collider(player, ground);
@@ -69,14 +69,12 @@ function update() {
     player.setVelocityX(0);
 
     if (cursors.left.isDown) {
-        player.setVelocityX(-250);
+        player.setVelocityX(-200);
     }
-
     if (cursors.right.isDown) {
-        player.setVelocityX(250);
+        player.setVelocityX(200);
     }
-
     if (cursors.up.isDown && player.body.blocked.down) {
-        player.setVelocityY(-600);
+        player.setVelocityY(-500);
     }
 }
