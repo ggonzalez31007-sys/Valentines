@@ -1,34 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Valentine Sanrio Platformer</title>
+    <meta charset="UTF-8">
+    <title>Sanrio Platformer</title>
+    <style>
+        body {
+            margin: 0;
+            background: #ffb6c1; /* overall pink background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
 
-  <!-- Phaser 3 CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+        /* Start screen overlay */
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 182, 193, 0.6); /* semi-transparent overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
 
-  <style>
-    body {
-      margin: 0;
-      background-color: #ffc0cb; /* soft Valentine pink background */
-      font-family: 'Comic Sans MS', cursive, sans-serif;
-    }
+        /* Cute salmon pink box */
+        #startScreenBox {
+            background: #ffa07a; /* salmon pink */
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            font-size: 32px;
+            color: white; /* white letters */
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
 
-    canvas {
-      display: block;
-      margin: 0 auto;
-      border: 4px solid #ff69b4; /* optional cute border around canvas */
-      box-shadow: 0 0 20px #ffb6c1;
-    }
-  </style>
+        canvas {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-  <!-- Optional start screen container (Phaser will draw over this) -->
-  <div id="game-container"></div>
+    <!-- Start Screen Overlay -->
+    <div id="startScreen">
+        <div id="startScreenBox">
+            Hey Gorgeous!<br>Press Enter To Start!
+        </div>
+    </div>
 
-  <!-- Load your main game script -->
-  <script src="main.js"></script>
+    <!-- Phaser library -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.js"></script>
+
+    <!-- Your game code -->
+    <script src="main.js"></script>
+
+    <script>
+        // Hide start screen when Enter is pressed
+        const startScreen = document.getElementById('startScreen');
+
+        window.addEventListener('keydown', function(event) {
+            if(event.code === 'Enter') {
+                startScreen.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
-  
