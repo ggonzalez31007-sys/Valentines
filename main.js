@@ -1,123 +1,121 @@
-// ----- Phaser game configuration -----
 const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
-    backgroundColor: 0xffb6c1, // pink background
+    backgroundColor: '#ffc0cb', // temporary pink to prove canvas works
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 500 }, debug: false }
+        arcade: {
+            gravity: { y: 800 },
+            debug: false
+        }
     },
-    scene: { preload, create, update }
+    scene: {
+        preload,
+        create,
+        update
+    }
 };
 
 const game = new Phaser.Game(config);
 
-// ----- Global variables -----
-let player, cursors, platforms, background, keroppi, keroppiText;
-let isJumping = false, jumpTime = 0, maxJumpTime = 300;
+let player;
+let cursors;
+let platforms;
 
-// ----- Preload assets -----
 function preload() {
-    // Background
-    this.load.image('background', 'assets/background/background.png');
+    // BACKGROUND
+    this.load.image(
+        'background',
+        'asset folder/characters/background/background.png'
+    );
 
-    // Platforms
-    this.load.image('platform', 'assets/platforms/platform.png');
+    // PLATFORM
+    this.load.image(
+        'platform',
+        'asset folder/characters/platforms/platform.png'
+    );
 
-    // Player
-    this.load.spritesheet('kitty', 'assets/characters/hello-kitty.png', { frameWidth: 32, frameHeight: 48 });
+    // BLOCKS
+    this.load.image(
+        'capyblock',
+        'asset folder/characters/blocks/capyblock.png'
+    );
+    this.load.image(
+        'powerup',
+        'asset folder/characters/blocks/powerup.png'
+    );
 
-    // Keroppi
-    this.load.image('keroppi', 'assets/characters/kerropi.png');
+    // ENEMY
+    this.load.image(
+        'evilCupcake',
+        'asset folder/characters/enemies/evil-cupcake.png'
+    );
 
-    // Blocks
-    this.load.image('capyblock', 'assets/blocks/capyblock.png');
-    this.load.image('powerup', 'assets/blocks/powerup.png');
+    // POWERUP
+    this.load.image(
+        'berry',
+        'asset folder/characters/powerups/berry.png'
+    );
 
-    // Powerups
-    this.load.image('berry', 'assets/powerups/berry.png');
+    // CHARACTERS (DIRECTLY IN FOLDER)
+    this.load.spritesheet(
+        'kitty',
+        'asset folder/characters/hello-kitty.png',
+        { frameWidth: 32, frameHeight: 48 }
+    );
 
-    // Enemies
-    this.load.image('evilCupcake', 'assets/enemies/evil-cupcake.png');
+    this.load.image(
+        'kerropi',
+        'asset folder/characters/kerropi.png'
+    );
 }
 
-// ----- Create game objects -----
 function create() {
-    // Background
-    background = this.add.image(400, 300, 'background');
+    // BACKGROUND
+    this.add.image(400, 300, 'background').setScrollFactor(0);
 
-    // Platforms
+    // PLATFORMS
     platforms = this.physics.add.staticGroup();
-    platforms.create(400, 580, 'platform').setScale(2).refreshBody(); // ground
-    platforms.create(200, 450, 'platform');
-    platforms.create(600, 350, 'platform');
+    platforms.create(400, 580, 'platform').setScale(2, 1).refreshBody();
 
-    // Player
-    player = this.physics.add.sprite(100, 500, 'kitty');
+    // PLAYER
+    player = this.physics.add.sprite(100, 450, 'kitty');
     player.setCollideWorldBounds(true);
+    player.setBounce(0.1);
 
+    this.physics.add.collider(player, platforms);
+
+    // ANIMATION (safe even if sprite has 1 frame)
     this.anims.create({
         key: 'walk',
-        frames: this.anims.generateFrameNumbers('kitty', { start: 1, end: 3 }),
-        frameRate: 8,
+        frames: this.anims.generateFrameNumbers('kitty', { start: 0, end: 0 }),
+        frameRate: 1,
         repeat: -1
     });
 
-    // Collisions
-    this.physics.add.collider(player, platforms);
-
-    // Keroppi
-    keroppi = this.physics.add.staticSprite(600, 520, 'keroppi');
-    keroppiText = this.add.text(keroppi.x, keroppi.y - 50, "Find your boyfriend!", {
-        fontSize: '24px',
-        color: '#ffffff',
-        backgroundColor: '#000000',
-        padding: { x: 10, y: 5 }
-    }).setOrigin(0.5).setVisible(false);
-
-    // Input keys
-    cursors = this.input.keyboard.addKeys({
-        left: Phaser.Input.Keyboard.KeyCodes.A,
-        right: Phaser.Input.Keyboard.KeyCodes.D,
-        jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
-        sprint: Phaser.Input.Keyboard.KeyCodes.SHIFT
-    });
+    // INPUT
+    cursors = this.input.keyboard.createCursorKeys();
 }
 
-// ----- Game loop -----
 function update() {
-    // Horizontal movement
-    let speed = cursors.sprint.isDown ? 320 : 160;
+    if (!player) return;
+
     player.setVelocityX(0);
 
-    if(cursors.left.isDown) {
-        player.setVelocityX(-speed);
-        player.anims.play('walk', true);
+    if (cursors.left.isDown) {
+        player.setVelocityX(-200);
         player.setFlipX(true);
-    } else if(cursors.right.isDown) {
-        player.setVelocityX(speed);
         player.anims.play('walk', true);
+    } else if (cursors.right.isDown) {
+        player.setVelocityX(200);
         player.setFlipX(false);
+        player.anims.play('walk', true);
     } else {
         player.anims.stop();
     }
 
-    // Variable jump (hold Space to jump higher)
-    if(cursors.jump.isDown && player.body.touching.down && !isJumping) {
-        player.setVelocityY(-330); // initial jump
-        isJumping = true;
-        jumpTime = 0;
+    if (cursors.up.isDown && player.body.blocked.down) {
+        player.setVelocityY(-450);
     }
-
-    if(cursors.jump.isDown && isJumping) {
-        jumpTime += this.sys.game.loop.delta; // correct scene reference
-        if(jumpTime < maxJumpTime) player.setVelocityY(-330);
-    }
-
-    if(cursors.jump.isUp) isJumping = false;
-
-    // Keroppi text trigger
-    let dist = Phaser.Math.Distance.Between(player.x, player.y, keroppi.x, keroppi.y);
-    keroppiText.setVisible(dist < 100);
 }
