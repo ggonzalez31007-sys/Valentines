@@ -72,6 +72,7 @@ function create() {
         repeat: -1
     });
 
+    // Collisions
     this.physics.add.collider(player, platforms);
 
     // Keroppi
@@ -118,7 +119,7 @@ function update() {
     }
 
     if (cursors.jump.isDown && isJumping) {
-        jumpTime += this.game.loop.delta;
+        jumpTime += this.sys.game.loop.delta; // fixed variable jump
         if (jumpTime < maxJumpTime) {
             player.setVelocityY(-330); // continue upward while holding
         }
