@@ -60,31 +60,38 @@ function create() {
     // Background image (behind gameplay)
     const bg = this.add.image(400, 300, 'background').setDepth(-1);
 
-    // Mario-style ground (full bottom)
+    // Mario-style ground (2 rows to cover bottom completely)
     platforms = this.physics.add.staticGroup();
     const tileWidth = 64;
-    const groundY = 600 - 32; // assuming platform.png height ~64, adjust if needed
+    const platformHeight = 64; // adjust to your platform.png height
+    const groundY1 = 600 - platformHeight / 2;      // bottom row
+    const groundY2 = 600 - platformHeight - platformHeight / 2; // row above
+
     for (let x = 0; x < 800; x += tileWidth) {
-        platforms.create(x + tileWidth / 2, groundY, 'platform').setVisible(false);
+        platforms.create(x + tileWidth / 2, groundY1, 'platform').setVisible(false);
+        platforms.create(x + tileWidth / 2, groundY2, 'platform').setVisible(false);
     }
 
-    // Player (invisible until menu is gone)
-    player = this.physics.add.sprite(100, groundY - 32, 'kitty'); // start on top of ground
+    // Player (start on top of bottom row)
+    player = this.physics.add.sprite(100, groundY2 - platformHeight / 2, 'kitty');
     player.setCollideWorldBounds(true);
     player.setVisible(false);
+
+    // Collider
     this.physics.add.collider(player, platforms);
 
     // Input
     cursors = this.input.keyboard.createCursorKeys();
 
+    // Enter key hides menu and starts game
     this.input.keyboard.on('keydown-ENTER', () => {
-        // Hide menu completely
+        // Hide menu
         menuBoxBorder.setVisible(false);
         menuBoxInner.setVisible(false);
         menuText.setVisible(false);
         menuActive = false;
 
-        // Show ground and player
+        // Show platforms and player
         platforms.getChildren().forEach(p => p.setVisible(true));
         player.setVisible(true);
     });
