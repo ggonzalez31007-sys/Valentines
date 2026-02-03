@@ -9,11 +9,7 @@ const config = {
             debug: false
         }
     },
-    scene: {
-        preload,
-        create,
-        update
-    }
+    scene: { preload, create, update }
 };
 
 new Phaser.Game(config);
@@ -24,30 +20,32 @@ let ground;
 
 function preload() {
     this.load.image('bg', 'assetfolder/background/background.png');
-    this.load.image('ground', 'assetfolder/platforms/platform.png');
+    this.load.image('platformTile', 'assetfolder/platforms/platform.png');
     this.load.image('capy', 'assetfolder/characters/capy.png');
 }
 
 function create() {
-    // BACKGROUND (always behind)
+    // background always behind
     this.add.image(400, 300, 'bg').setDepth(-10);
 
-    // GROUND — full bottom like classic Mario
+    // ground group
     ground = this.physics.add.staticGroup();
 
-    const temp = this.add.image(0, 0, 'ground').setVisible(false);
+    // measure platform tile
+    const temp = this.add.image(0, 0, 'platformTile').setVisible(false);
     const tileW = temp.width;
     const tileH = temp.height;
     temp.destroy();
 
+    // bottom-aligned Mario ground
     const groundY = 600 - tileH / 2;
 
     for (let x = 0; x < 800; x += tileW) {
-        ground.create(x + tileW / 2, groundY, 'ground');
+        ground.create(x + tileW / 2, groundY, 'platformTile');
     }
 
-    // PLAYER — CAPY, forced visible
-    player = this.physics.add.sprite(400, 200, 'capy');
+    // SINGLE PLAYER (CAPY)
+    player = this.physics.add.sprite(200, 200, 'capy');
     player.setScale(0.6);
     player.setDepth(10);
     player.setCollideWorldBounds(true);
