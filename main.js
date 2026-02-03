@@ -2,11 +2,10 @@ const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
-    backgroundColor: '#ffc0cb', // temporary pink to prove canvas works
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 800 },
+            gravity: { y: 900 },
             debug: false
         }
     },
@@ -24,77 +23,42 @@ let cursors;
 let platforms;
 
 function preload() {
-    // BACKGROUND
     this.load.image(
         'background',
         'asset folder/characters/background/background.png'
     );
 
-    // PLATFORM
     this.load.image(
         'platform',
         'asset folder/characters/platforms/platform.png'
     );
 
-    // BLOCKS
+    // IMPORTANT: Kitty is a NORMAL IMAGE, NOT spritesheet
     this.load.image(
-        'capyblock',
-        'asset folder/characters/blocks/capyblock.png'
-    );
-    this.load.image(
-        'powerup',
-        'asset folder/characters/blocks/powerup.png'
-    );
-
-    // ENEMY
-    this.load.image(
-        'evilCupcake',
-        'asset folder/characters/enemies/evil-cupcake.png'
-    );
-
-    // POWERUP
-    this.load.image(
-        'berry',
-        'asset folder/characters/powerups/berry.png'
-    );
-
-    // CHARACTERS (DIRECTLY IN FOLDER)
-    this.load.spritesheet(
         'kitty',
-        'asset folder/characters/hello-kitty.png',
-        { frameWidth: 32, frameHeight: 48 }
-    );
-
-    this.load.image(
-        'kerropi',
-        'asset folder/characters/kerropi.png'
+        'asset folder/characters/hello-kitty.png'
     );
 }
 
 function create() {
-    // BACKGROUND
-    this.add.image(400, 300, 'background').setScrollFactor(0);
+    // Background
+    this.add.image(400, 300, 'background');
 
-    // PLATFORMS
+    // Platforms group
     platforms = this.physics.add.staticGroup();
-    platforms.create(400, 580, 'platform').setScale(2, 1).refreshBody();
 
-    // PLAYER
+    // Mario-style wide ground
+    for (let x = 0; x < 1600; x += 64) {
+        platforms.create(x, 568, 'platform').setOrigin(0, 0).refreshBody();
+    }
+
+    // Player (NOW VISIBLE)
     player = this.physics.add.sprite(100, 450, 'kitty');
+    player.setScale(1);
     player.setCollideWorldBounds(true);
-    player.setBounce(0.1);
 
     this.physics.add.collider(player, platforms);
 
-    // ANIMATION (safe even if sprite has 1 frame)
-    this.anims.create({
-        key: 'walk',
-        frames: this.anims.generateFrameNumbers('kitty', { start: 0, end: 0 }),
-        frameRate: 1,
-        repeat: -1
-    });
-
-    // INPUT
     cursors = this.input.keyboard.createCursorKeys();
 }
 
@@ -104,18 +68,12 @@ function update() {
     player.setVelocityX(0);
 
     if (cursors.left.isDown) {
-        player.setVelocityX(-200);
-        player.setFlipX(true);
-        player.anims.play('walk', true);
+        player.setVelocityX(-220);
     } else if (cursors.right.isDown) {
-        player.setVelocityX(200);
-        player.setFlipX(false);
-        player.anims.play('walk', true);
-    } else {
-        player.anims.stop();
+        player.setVelocityX(220);
     }
 
     if (cursors.up.isDown && player.body.blocked.down) {
-        player.setVelocityY(-450);
+        player.setVelocityY(-500);
     }
 }
