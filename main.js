@@ -5,7 +5,10 @@ const config = {
     height: 600,
     physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 500 }, debug: false }
+        arcade: { 
+            gravity: { y: 500 },
+            debug: true // shows collision boxes
+        }
     },
     scene: {
         preload: preload,
@@ -14,25 +17,56 @@ const config = {
     }
 };
 
-// Create Phaser game
+// Create Phaser game instance
 const game = new Phaser.Game(config);
 
+// ----- Global variables -----
 let player;
 let cursors;
+let platforms;
+let background;
+let keroppi;
+let keroppiText;
 
-// ----- Load assets -----
+// Variable jump
+let isJumping = false;
+let jumpTime = 0;
+const maxJumpTime = 300; // max ms you can hold jump
+
+// ----- Preload assets -----
 function preload() {
-    // Load your Hello Kitty PNG
-    this.load.spritesheet('kitty', 'assets/characters/hello-kitty.png', { frameWidth: 32, frameHeight: 48 });
+    // Background
+    this.load.image('background', 'assets/backgrounds/background.png');
+    
+    // Platforms
+    this.load.image('platform', 'assets/platforms/platform.png');
+    
+    // Player
+    this.load.spritesheet('kitty', 'assets/characters/hello-kitty.png', {
+        frameWidth: 32,
+        frameHeight: 48
+    });
+
+    // Keroppi
+    this.load.image('keroppi', 'assets/characters/kerropi.png');
 }
 
 // ----- Create game objects -----
 function create() {
-    // Add player sprite
-    player = this.physics.add.sprite(400, 500, 'kitty');
+    // --- Background ---
+    background = this.add.image(400, 300, 'background');
+    background.setOrigin(0.5, 0.5);
+
+    // --- Platforms ---
+    platforms = this.physics.add.staticGroup();
+    platforms.create(400, 580, 'platform').setScale(2).refreshBody(); // ground
+    platforms.create(200, 450, 'platform'); // floating
+    platforms.create(600, 350, 'platform'); // floating
+
+    // --- Player ---
+    player = this.physics.add.sprite(100, 500, 'kitty');
     player.setCollideWorldBounds(true);
 
-    // Create simple walk animation
     this.anims.create({
         key: 'walk',
         frames: this.anims.generateFrameNumbers('kitty', { start: 1, end: 3 }),
@@ -40,30 +74,71 @@ function create() {
         repeat: -1
     });
 
-    // Input: cursor keys
-    cursors = this.input.keyboard.createCursorKeys();
+    // Collisions
+    this.physics.add.collider(player, platforms);
+
+    // --- Keroppi ---
+    keroppi = this.physics.add.staticSprite(600, 520, 'keroppi'); // on ground
+    keroppiText = this.add.text(keroppi.x, keroppi.y - 50, "Find your boyfriend!", {
+        fontSize: '24px',
+        color: '#ffffff',
+        backgroundColor: '#000000',
+        padding: { x: 10, y: 5 }
+    }).setOrigin(0.5).setVisible(false);
+
+    // --- Input ---
+    cursors = this.input.keyboard.addKeys({
+        left: Phaser.Input.Keyboard.KeyCodes.A,
+        right: Phaser.Input.Keyboard.KeyCodes.D,
+        jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
+        sprint: Phaser.Input.Keyboard.KeyCodes.SHIFT
+    });
 }
 
 // ----- Game loop -----
 function update() {
+    // --- Player horizontal movement ---
+    let speed = cursors.sprint.isDown ? 320 : 160;
     player.setVelocityX(0);
 
-    // Left/right movement
     if (cursors.left.isDown) {
-        player.setVelocityX(-160);
+        player.setVelocityX(-speed);
         player.anims.play('walk', true);
         player.setFlipX(true);
     } else if (cursors.right.isDown) {
-        player.setVelocityX(160);
+        player.setVelocityX(speed);
         player.anims.play('walk', true);
         player.setFlipX(false);
     } else {
         player.anims.stop();
     }
 
-    // Jump
-    if (cursors.up.isDown && player.body.touching.down) {
-        player.setVelocityY(-330);
+    // --- Variable jump logic ---
+    // Start jump
+    if (cursors.jump.isDown && player.body.touching.down && !isJumping) {
+        player.setVelocityY(-330); // initial jump velocity
+        isJumping = true;
+        jumpTime = 0;
+    }
+
+    // Continue jump while holding Space and within maxJumpTime
+    if (cursors.jump.isDown && isJumping) {
+        jumpTime += this.game.loop.delta; // time since last frame
+        if (jumpTime < maxJumpTime) {
+            player.setVelocityY(-330); // maintain upward velocity
+        }
+    }
+
+    // Stop jump when key released
+    if (cursors.jump.isUp) {
+        isJumping = false;
+    }
+
+    // --- Keroppi text trigger ---
+    let distance = Phaser.Math.Distance.Between(player.x, player.y, keroppi.x, keroppi.y);
+    if (distance < 100) { // show text if close
+        keroppiText.setVisible(true);
+    } else {
+        keroppiText.setVisible(false);
     }
 }
- 
