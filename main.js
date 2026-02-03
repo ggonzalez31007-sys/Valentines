@@ -23,63 +23,49 @@ let cursors;
 let ground;
 
 function preload() {
-    // background
     this.load.image('bg', 'assetfolder/background/background.png');
-
-    // ground tile
     this.load.image('ground', 'assetfolder/platforms/platform.png');
-
-    // player sprite
-    this.load.image('player', 'assetfolder/characters/hello-kitty.png');
+    this.load.image('capy', 'assetfolder/characters/capy.png');
 }
 
 function create() {
-    // --- BACKGROUND ---
-    this.add.image(400, 300, 'bg').setDepth(0);
+    // BACKGROUND (always behind)
+    this.add.image(400, 300, 'bg').setDepth(-10);
 
-    // --- GROUND (FULL BOTTOM, MARIO STYLE) ---
+    // GROUND — full bottom like classic Mario
     ground = this.physics.add.staticGroup();
 
-    // safely measure tile size
     const temp = this.add.image(0, 0, 'ground').setVisible(false);
-    const tileWidth = temp.width;
-    const tileHeight = temp.height;
+    const tileW = temp.width;
+    const tileH = temp.height;
     temp.destroy();
 
-    // IMPORTANT: tile bottom touches canvas bottom
-    const groundY = 600 - tileHeight / 2;
+    const groundY = 600 - tileH / 2;
 
-    for (let x = 0; x < 800; x += tileWidth) {
-        ground.create(x + tileWidth / 2, groundY, 'ground');
+    for (let x = 0; x < 800; x += tileW) {
+        ground.create(x + tileW / 2, groundY, 'ground');
     }
 
-    // --- PLAYER ---
-    player = this.physics.add.sprite(
-        120,
-        groundY - tileHeight,
-        'player'
-    );
-
-    player.setScale(0.6);          // protects against oversized PNGs
+    // PLAYER — CAPY, forced visible
+    player = this.physics.add.sprite(400, 200, 'capy');
+    player.setScale(0.6);
+    player.setDepth(10);
     player.setCollideWorldBounds(true);
 
     this.physics.add.collider(player, ground);
 
-    // input
     cursors = this.input.keyboard.createCursorKeys();
 }
 
 function update() {
     player.setVelocityX(0);
 
-    // left / right
     if (cursors.left.isDown) {
         player.setVelocityX(-260);
     } else if (cursors.right.isDown) {
         player.setVelocityX(260);
     }
 
-    // jump (Mario-style)
     if (cursors.up.isDown && player.body.blocked.down) {
         player.setVelocityY(-760);
     }
