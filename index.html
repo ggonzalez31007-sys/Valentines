@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <title>Sanrio Platformer 💗</title>
 
-    <!-- Phaser 3 -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
 
     <style>
@@ -15,7 +14,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            font-family: "Arial Rounded MT Bold", Arial, sans-serif;
+            font-family: Arial, sans-serif;
         }
 
         #game-container {
@@ -25,12 +24,10 @@
         }
 
         canvas {
-            border: 8px solid #ff9fbf;
-            box-shadow: 0 0 20px rgba(255, 160, 190, 0.8);
             display: block;
+            border: 8px solid #ff9fbf;
         }
 
-        /* MENU OVERLAY */
         #menu {
             position: absolute;
             width: 800px;
@@ -39,19 +36,18 @@
             left: 0;
             background: rgba(255, 214, 231, 0.9);
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             z-index: 10;
         }
 
         #menu-box {
-            background: #ffa4b8; /* salmon pink */
-            border-radius: 20px;
-            padding: 32px 44px;
+            background: #ffa4b8;
             color: white;
+            padding: 32px 44px;
+            border-radius: 20px;
             font-size: 24px;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
     </style>
 </head>
@@ -66,17 +62,13 @@
     </div>
 </div>
 
-<!-- GAME CODE -->
 <script src="main.js"></script>
 
 <script>
-    // ENTER TO START
     window.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             const menu = document.getElementById("menu");
-            if (menu) {
-                menu.style.display = "none";
-            }
+            if (menu) menu.style.display = "none";
         }
     });
 </script>
