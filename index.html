@@ -6,18 +6,14 @@
     <style>
         body {
             margin: 0;
-            background: #ffb6c1; /* overall pink background */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            background: #ffb6c1; /* pink background */
             font-family: 'Comic Sans MS', cursive, sans-serif;
+            overflow: hidden;
         }
 
         /* Start screen overlay */
         #startScreen {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -29,9 +25,9 @@
             z-index: 10;
         }
 
-        /* Cute salmon pink box */
+        /* Salmon pink box */
         #startScreenBox {
-            background: #ffa07a; /* salmon pink */
+            background: #ffa07a; /* cute salmon pink */
             padding: 40px 60px;
             border-radius: 20px;
             text-align: center;
@@ -41,7 +37,10 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.2);
         }
 
+        /* Phaser canvas */
         canvas {
+            position: relative;
+            z-index: 5; /* below the start screen until removed */
             display: block;
         }
     </style>
@@ -57,16 +56,18 @@
     <!-- Phaser library -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.js"></script>
 
-    <!-- Your game code -->
+    <!-- Your main game code -->
     <script src="main.js"></script>
 
     <script>
-        // Hide start screen when Enter is pressed
+        // Start screen logic
         const startScreen = document.getElementById('startScreen');
 
         window.addEventListener('keydown', function(event) {
             if(event.code === 'Enter') {
+                // Hide overlay and allow interaction with game
                 startScreen.style.display = 'none';
+                startScreen.style.pointerEvents = 'none';
             }
         });
     </script>
