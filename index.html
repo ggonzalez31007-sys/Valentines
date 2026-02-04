@@ -73,12 +73,11 @@
   #question {
     display: none;
     margin-top: 20px;
-    position: relative;
   }
 
   #valentine-text {
-    font-size: 32px;
-    font-weight: bold;
+    position: relative;
+    height: 48px;
     margin-bottom: 20px;
   }
 
@@ -95,7 +94,7 @@
 
   .flying-letter {
     position: fixed;
-    font-size: 24px;
+    font-size: 32px;
     font-weight: bold;
     color: #8b0000;
     transition: transform 1.2s ease-in-out;
@@ -134,7 +133,6 @@
 <canvas id="confetti"></canvas>
 
 <script>
-/* ================= GRID ================= */
 const GRID_SIZE = 10;
 const WORDS = ["WILL","YOU","BE","MY","VALENTINE"];
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -148,7 +146,6 @@ const valentineText = document.getElementById("valentine-text");
 let gridData = Array.from({length:GRID_SIZE},()=>Array(GRID_SIZE).fill(""));
 let foundWords = new Set();
 
-/* ================= WORD PLACEMENT ================= */
 function placeWord(word){
   for(let t=0;t<100;t++){
     const [dx,dy]=directions[Math.floor(Math.random()*directions.length)];
@@ -179,7 +176,6 @@ gridData.flat().forEach(l=>{
   grid.appendChild(d);
 });
 
-/* ================= SELECTION ================= */
 let selecting=false, selected=[];
 grid.addEventListener("mousedown",e=>{
   if(!e.target.classList.contains("cell"))return;
@@ -216,71 +212,58 @@ function check(){
   } else clearSel();
 }
 
-/* ================= END SEQUENCE ================= */
 function finishGame(){
   message.textContent="Congratulations Baby! 💕";
   setTimeout(()=>message.textContent="You found all the words!",5000);
   setTimeout(()=>message.textContent="Now to complete this you have one last thing to do!",10000);
-  setTimeout(animateSentence,15000);
+  setTimeout(()=>{
+    question.style.display="block";
+    animateSentence();
+  },15000);
 }
 
-/* ================= LETTER ANIMATION ================= */
+/* ⭐ FINAL LETTER ASSEMBLY ⭐ */
 function animateSentence(){
   const sentence = "WILL YOU BE MY VALENTINE";
   const foundCells = [...document.querySelectorAll(".cell.found")];
+  const used = new Set();
 
   const targetRect = valentineText.getBoundingClientRect();
-
-  let usedCells = new Set();
   let cursorX = 0;
 
-  sentence.split("").forEach((char) => {
-    if (char === " ") {
-      cursorX += 18; // reserve space for spaces
-      return;
-    }
+  sentence.split("").forEach(char=>{
+    if(char===" "){ cursorX+=20; return; }
 
-    // find ONE unused matching letter from the grid
-    const source = foundCells.find(
-      c => c.textContent === char && !usedCells.has(c)
-    );
-    if (!source) return;
-
-    usedCells.add(source);
+    const source = foundCells.find(c=>c.textContent===char && !used.has(c));
+    if(!source) return;
+    used.add(source);
 
     const start = source.getBoundingClientRect();
+    const letter = document.createElement("div");
+    letter.className = "flying-letter";
+    letter.textContent = char;
+    letter.style.left = start.left+"px";
+    letter.style.top = start.top+"px";
+    document.body.appendChild(letter);
 
-    const flyer = document.createElement("div");
-    flyer.className = "flying-letter";
-    flyer.textContent = char;
-    flyer.style.left = start.left + "px";
-    flyer.style.top = start.top + "px";
+    const finalX = targetRect.left + cursorX;
+    const finalY = targetRect.top;
 
-    document.body.appendChild(flyer);
-
-    const targetX = targetRect.left + cursorX;
-    const targetY = targetRect.top;
-
-    requestAnimationFrame(() => {
-      flyer.style.transform =
-        `translate(${targetX - start.left}px, ${targetY - start.top}px)`;
+    requestAnimationFrame(()=>{
+      letter.style.transform =
+        `translate(${finalX-start.left}px, ${finalY-start.top}px)`;
     });
 
-    cursorX += 26; // advance cursor for next letter
+    cursorX += 28;
   });
-
-  setTimeout(() => {
-    valentineText.textContent = "Will you be my valentine?";
-    question.style.display = "block";
-  }, 1300);
 }
 
-/* ================= YES / NO ================= */
+/* YES / NO */
 const noBtn=document.getElementById("no");
 noBtn.addEventListener("mouseenter",()=>{
   noBtn.style.position="fixed";
-  noBtn.style.left=Math.random()*(window.innerWidth-120)+"px";
-  noBtn.style.top=Math.random()*(window.innerHeight-60)+"px";
+  noBtn.style.left=Math.random()*(innerWidth-120)+"px";
+  noBtn.style.top=Math.random()*(innerHeight-60)+"px";
 });
 
 document.getElementById("yes").addEventListener("click",()=>{
@@ -289,7 +272,7 @@ document.getElementById("yes").addEventListener("click",()=>{
   setTimeout(()=>message.textContent="Go outside!! 💕",5000);
 });
 
-/* ================= CONFETTI ================= */
+/* CONFETTI */
 const canvas=document.getElementById("confetti");
 const ctx=canvas.getContext("2d");
 canvas.width=innerWidth; canvas.height=innerHeight;
