@@ -9,16 +9,22 @@
     margin: 0;
     background: #ffc0cb;
     font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     height: 100vh;
     overflow: hidden;
   }
 
   h1 {
     color: #8b0000;
+    text-align: center;
     margin-top: 20px;
+  }
+
+  #game {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 30px;
+    margin-top: 30px;
   }
 
   #grid-wrapper {
@@ -26,7 +32,6 @@
     padding: 16px;
     border-radius: 20px;
     box-shadow: 0 0 20px rgba(255,105,180,0.5);
-    margin-top: 20px;
   }
 
   #grid {
@@ -63,23 +68,16 @@
     color: white;
   }
 
-  #message {
-    margin-top: 20px;
-    font-size: 22px;
+  #side {
+    width: 280px;
+    min-height: 300px;
     color: #8b0000;
-    min-height: 40px;
-    text-align: center;
+    font-size: 20px;
   }
 
   #question {
     display: none;
-    text-align: center;
     margin-top: 20px;
-  }
-
-  #question p {
-    font-size: 28px;
-    color: #8b0000;
   }
 
   button {
@@ -90,13 +88,12 @@
     cursor: pointer;
     background: #ff69b4;
     color: white;
-    margin: 10px;
+    margin: 10px 10px 0 0;
   }
 
   canvas {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     pointer-events: none;
   }
 </style>
@@ -106,16 +103,20 @@
 
 <h1>💗 Find the hidden words 💗</h1>
 
-<div id="grid-wrapper">
-  <div id="grid"></div>
-</div>
+<div id="game">
+  <div id="grid-wrapper">
+    <div id="grid"></div>
+  </div>
 
-<div id="message"></div>
+  <div id="side">
+    <div id="message">Find all the words 💕</div>
 
-<div id="question">
-  <p>Will you be my valentine?</p>
-  <button id="yes">Yes</button>
-  <button id="no">No</button>
+    <div id="question">
+      <p>Will you be my valentine?</p>
+      <button id="yes">Yes</button>
+      <button id="no">No</button>
+    </div>
+  </div>
 </div>
 
 <canvas id="confetti"></canvas>
@@ -130,12 +131,15 @@ const WORDS = ["WILL", "YOU", "BE", "MY", "VALENTINE"];
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 const directions = [
-  [1, 0],   // horizontal
-  [0, 1],   // vertical
-  [1, 1]    // diagonal
+  [1, 0],
+  [0, 1],
+  [1, 1]
 ];
 
 const grid = document.getElementById("grid");
+const message = document.getElementById("message");
+const question = document.getElementById("question");
+
 let gridData = Array.from({ length: GRID_SIZE }, () =>
   Array(GRID_SIZE).fill("")
 );
@@ -143,26 +147,26 @@ let gridData = Array.from({ length: GRID_SIZE }, () =>
 let foundWords = new Set();
 
 /* ======================
-   PLACE WORDS
+   WORD PLACEMENT
 ====================== */
 
 function placeWord(word) {
   for (let attempt = 0; attempt < 100; attempt++) {
-    const dir = directions[Math.floor(Math.random() * directions.length)];
+    const [dx, dy] = directions[Math.floor(Math.random() * directions.length)];
     const row = Math.floor(Math.random() * GRID_SIZE);
     const col = Math.floor(Math.random() * GRID_SIZE);
 
-    const endRow = row + dir[1] * (word.length - 1);
-    const endCol = col + dir[0] * (word.length - 1);
+    const endRow = row + dy * (word.length - 1);
+    const endCol = col + dx * (word.length - 1);
 
     if (endRow < 0 || endRow >= GRID_SIZE || endCol < 0 || endCol >= GRID_SIZE)
       continue;
 
     let fits = true;
     for (let i = 0; i < word.length; i++) {
-      const r = row + dir[1] * i;
-      const c = col + dir[0] * i;
-      if (gridData[r][c] !== "" && gridData[r][c] !== word[i]) {
+      const r = row + dy * i;
+      const c = col + dx * i;
+      if (gridData[r][c] && gridData[r][c] !== word[i]) {
         fits = false;
         break;
       }
@@ -171,42 +175,35 @@ function placeWord(word) {
     if (!fits) continue;
 
     for (let i = 0; i < word.length; i++) {
-      const r = row + dir[1] * i;
-      const c = col + dir[0] * i;
-      gridData[r][c] = word[i];
+      gridData[row + dy * i][col + dx * i] = word[i];
     }
     return;
   }
 }
 
-/* ======================
-   BUILD GRID
-====================== */
-
 WORDS.forEach(placeWord);
 
 for (let r = 0; r < GRID_SIZE; r++) {
   for (let c = 0; c < GRID_SIZE; c++) {
-    if (gridData[r][c] === "") {
+    if (!gridData[r][c]) {
       gridData[r][c] = letters[Math.floor(Math.random() * letters.length)];
     }
   }
 }
 
-function renderGrid() {
-  grid.innerHTML = "";
-  gridData.flat().forEach(letter => {
-    const cell = document.createElement("div");
-    cell.className = "cell";
-    cell.textContent = letter;
-    grid.appendChild(cell);
-  });
-}
+/* ======================
+   RENDER
+====================== */
 
-renderGrid();
+gridData.flat().forEach(letter => {
+  const cell = document.createElement("div");
+  cell.className = "cell";
+  cell.textContent = letter;
+  grid.appendChild(cell);
+});
 
 /* ======================
-   SELECTION LOGIC
+   SELECTION
 ====================== */
 
 let selecting = false;
@@ -216,21 +213,21 @@ grid.addEventListener("mousedown", e => {
   if (!e.target.classList.contains("cell")) return;
   selecting = true;
   selected = [];
-  selectCell(e.target);
+  select(e.target);
 });
 
 grid.addEventListener("mouseover", e => {
   if (!selecting || !e.target.classList.contains("cell")) return;
-  selectCell(e.target);
+  select(e.target);
 });
 
 document.addEventListener("mouseup", () => {
   if (!selecting) return;
   selecting = false;
-  checkSelection();
+  checkWord();
 });
 
-function selectCell(cell) {
+function select(cell) {
   if (cell.classList.contains("found")) return;
   if (selected.includes(cell)) return;
   cell.classList.add("active");
@@ -242,7 +239,7 @@ function clearSelection() {
   selected = [];
 }
 
-function checkSelection() {
+function checkWord() {
   const word = selected.map(c => c.textContent).join("");
   if (WORDS.includes(word) && !foundWords.has(word)) {
     selected.forEach(c => {
@@ -250,40 +247,29 @@ function checkSelection() {
       c.classList.add("found");
     });
     foundWords.add(word);
-    if (foundWords.size === WORDS.length) completeGame();
+    burstConfetti();
+    message.textContent = `Found: ${word} 💖`;
+
+    if (foundWords.size === WORDS.length) finishGame();
   } else {
     clearSelection();
   }
 }
 
 /* ======================
-   COMPLETION FLOW
+   END FLOW
 ====================== */
 
-const message = document.getElementById("message");
-const question = document.getElementById("question");
-
-function completeGame() {
-  document.getElementById("grid-wrapper").style.display = "none";
-
-  const lines = [
-    "Congratulations Baby!",
-    "You found all the words!",
-    "Now to complete this you have one last thing to do!"
-  ];
-
-  let i = 0;
-  const interval = setInterval(() => {
-    message.textContent = lines[i++];
-    if (i === lines.length) {
-      clearInterval(interval);
-      setTimeout(() => {
-        message.textContent = "";
-        question.style.display = "block";
-        startConfetti();
-      }, 1200);
-    }
-  }, 1500);
+function finishGame() {
+  setTimeout(() => {
+    message.innerHTML = `
+      Congratulations Baby! 💕<br>
+      You found all the words!<br><br>
+      Now to complete this you have one last thing to do!
+    `;
+    question.style.display = "block";
+    startConfetti();
+  }, 600);
 }
 
 /* ======================
@@ -317,29 +303,38 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let confetti = Array.from({ length: 150 }, () => ({
-  x: Math.random() * canvas.width,
-  y: Math.random() * canvas.height,
-  r: Math.random() * 6 + 4,
-  d: Math.random() * 5 + 2,
-  color: Math.random() > 0.5 ? "#ffc0cb" : "#ffffff"
-}));
+let confetti = [];
+
+function burstConfetti() {
+  for (let i = 0; i < 30; i++) {
+    confetti.push({
+      x: Math.random() * canvas.width,
+      y: 0,
+      r: Math.random() * 6 + 4,
+      d: Math.random() * 4 + 2,
+      color: Math.random() > 0.5 ? "#ffc0cb" : "#ffffff"
+    });
+  }
+}
 
 function startConfetti() {
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    confetti.forEach(c => {
-      ctx.beginPath();
-      ctx.fillStyle = c.color;
-      ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-      ctx.fill();
-      c.y += c.d;
-      if (c.y > canvas.height) c.y = -10;
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
+  burstConfetti();
 }
+
+function drawConfetti() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  confetti.forEach((c, i) => {
+    ctx.beginPath();
+    ctx.fillStyle = c.color;
+    ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+    ctx.fill();
+    c.y += c.d;
+    if (c.y > canvas.height) confetti.splice(i, 1);
+  });
+  requestAnimationFrame(drawConfetti);
+}
+
+drawConfetti();
 </script>
 
 </body>
