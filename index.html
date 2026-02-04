@@ -58,6 +58,11 @@
     background: #ffb6c1;
   }
 
+  .cell.found {
+    background: #ff69b4;
+    color: white;
+  }
+
   #message {
     margin-top: 20px;
     font-size: 22px;
@@ -99,7 +104,7 @@
 
 <body>
 
-<h1>💗 Find the hidden phrase 💗</h1>
+<h1>💗 Find the hidden words 💗</h1>
 
 <div id="grid-wrapper">
   <div id="grid"></div>
@@ -117,56 +122,87 @@
 
 <script>
 /* ======================
-   GRID SETUP
+   CONFIG
 ====================== */
 
 const GRID_SIZE = 10;
-const PHRASE = "WILLYOUBEMYVALENTINE"; // 19 letters
+const WORDS = ["WILL", "YOU", "BE", "MY", "VALENTINE"];
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const grid = document.getElementById("grid");
 
+const directions = [
+  [1, 0],   // horizontal
+  [0, 1],   // vertical
+  [1, 1]    // diagonal
+];
+
+const grid = document.getElementById("grid");
 let gridData = Array.from({ length: GRID_SIZE }, () =>
   Array(GRID_SIZE).fill("")
 );
 
-// Place phrase left → right across rows
-function placePhrase() {
-  let index = 0;
+let foundWords = new Set();
 
-  for (let r = 0; r < GRID_SIZE && index < PHRASE.length; r++) {
-    for (let c = 0; c < GRID_SIZE && index < PHRASE.length; c++) {
-      gridData[r][c] = PHRASE[index];
-      index++;
-    }
-  }
-}
+/* ======================
+   PLACE WORDS
+====================== */
 
-// Fill remaining cells safely
-function fillGrid() {
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
-      if (gridData[r][c] === "") {
-        gridData[r][c] = letters[Math.floor(Math.random() * letters.length)];
+function placeWord(word) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const dir = directions[Math.floor(Math.random() * directions.length)];
+    const row = Math.floor(Math.random() * GRID_SIZE);
+    const col = Math.floor(Math.random() * GRID_SIZE);
+
+    const endRow = row + dir[1] * (word.length - 1);
+    const endCol = col + dir[0] * (word.length - 1);
+
+    if (endRow < 0 || endRow >= GRID_SIZE || endCol < 0 || endCol >= GRID_SIZE)
+      continue;
+
+    let fits = true;
+    for (let i = 0; i < word.length; i++) {
+      const r = row + dir[1] * i;
+      const c = col + dir[0] * i;
+      if (gridData[r][c] !== "" && gridData[r][c] !== word[i]) {
+        fits = false;
+        break;
       }
     }
+
+    if (!fits) continue;
+
+    for (let i = 0; i < word.length; i++) {
+      const r = row + dir[1] * i;
+      const c = col + dir[0] * i;
+      gridData[r][c] = word[i];
+    }
+    return;
   }
 }
 
-// Render grid
-function renderGrid() {
-  grid.innerHTML = "";
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      cell.textContent = gridData[r][c];
-      grid.appendChild(cell);
+/* ======================
+   BUILD GRID
+====================== */
+
+WORDS.forEach(placeWord);
+
+for (let r = 0; r < GRID_SIZE; r++) {
+  for (let c = 0; c < GRID_SIZE; c++) {
+    if (gridData[r][c] === "") {
+      gridData[r][c] = letters[Math.floor(Math.random() * letters.length)];
     }
   }
 }
 
-placePhrase();
-fillGrid();
+function renderGrid() {
+  grid.innerHTML = "";
+  gridData.flat().forEach(letter => {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.textContent = letter;
+    grid.appendChild(cell);
+  });
+}
+
 renderGrid();
 
 /* ======================
@@ -179,7 +215,7 @@ let selected = [];
 grid.addEventListener("mousedown", e => {
   if (!e.target.classList.contains("cell")) return;
   selecting = true;
-  clearSelection();
+  selected = [];
   selectCell(e.target);
 });
 
@@ -189,11 +225,13 @@ grid.addEventListener("mouseover", e => {
 });
 
 document.addEventListener("mouseup", () => {
+  if (!selecting) return;
   selecting = false;
-  checkWord();
+  checkSelection();
 });
 
 function selectCell(cell) {
+  if (cell.classList.contains("found")) return;
   if (selected.includes(cell)) return;
   cell.classList.add("active");
   selected.push(cell);
@@ -204,10 +242,18 @@ function clearSelection() {
   selected = [];
 }
 
-function checkWord() {
+function checkSelection() {
   const word = selected.map(c => c.textContent).join("");
-  if (word === PHRASE) completeGame();
-  else clearSelection();
+  if (WORDS.includes(word) && !foundWords.has(word)) {
+    selected.forEach(c => {
+      c.classList.remove("active");
+      c.classList.add("found");
+    });
+    foundWords.add(word);
+    if (foundWords.size === WORDS.length) completeGame();
+  } else {
+    clearSelection();
+  }
 }
 
 /* ======================
@@ -228,9 +274,8 @@ function completeGame() {
 
   let i = 0;
   const interval = setInterval(() => {
-    message.textContent = lines[i];
-    i++;
-    if (i >= lines.length) {
+    message.textContent = lines[i++];
+    if (i === lines.length) {
       clearInterval(interval);
       setTimeout(() => {
         message.textContent = "";
