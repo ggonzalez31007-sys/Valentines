@@ -2,350 +2,290 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Leslie's Valentine's Game</title>
+<title>Leslie's Valentine's Game 💖</title>
+
 <style>
   body {
     margin: 0;
-    font-family: 'Arial', sans-serif;
-    background-color: #ffc0cb; /* soft pink */
+    background: #ffc0cb;
+    font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
     height: 100vh;
     overflow: hidden;
   }
 
-  #game-container {
+  h1 {
+    color: #8b0000;
     margin-top: 20px;
-    position: relative;
   }
 
-  .grid {
+  #grid {
     display: grid;
-    grid-template-columns: repeat(8, 40px);
-    grid-template-rows: repeat(8, 40px);
-    gap: 2px;
+    grid-template-columns: repeat(10, 42px);
+    grid-template-rows: repeat(10, 42px);
+    gap: 4px;
+    background: #ff69b4;
+    padding: 10px;
+    border-radius: 16px;
+    margin-top: 20px;
   }
 
   .cell {
-    width: 40px;
-    height: 40px;
-    background-color: white;
+    width: 42px;
+    height: 42px;
+    background: white;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 20px;
     font-weight: bold;
-    user-select: none;
     cursor: pointer;
-    border-radius: 4px;
-    font-size: 1.2rem;
+    user-select: none;
   }
 
-  .cell.selected {
-    background-color: #ffb6c1; /* pink highlight */
+  .cell.active {
+    background: #ffb6c1;
   }
 
-  #messages {
+  #message {
     margin-top: 20px;
+    font-size: 22px;
+    color: #8b0000;
+    min-height: 40px;
     text-align: center;
-    font-size: 1.5rem;
-    color: #800000;
-    min-height: 100px;
   }
 
-  #final-question {
-    margin-top: 20px;
+  #question {
     display: none;
     text-align: center;
+    margin-top: 20px;
   }
 
-  #final-question button {
-    margin: 10px;
-    padding: 10px 20px;
-    font-size: 1.2rem;
+  #question p {
+    font-size: 28px;
+    color: #8b0000;
+  }
+
+  button {
+    padding: 12px 22px;
+    font-size: 18px;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
-    background-color: #ff69b4;
+    background: #ff69b4;
     color: white;
-    transition: all 0.2s;
-  }
-
-  #final-question button:hover {
-    transform: scale(1.1);
+    margin: 10px;
   }
 
   canvas {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     pointer-events: none;
   }
 </style>
 </head>
+
 <body>
-<div id="game-container">
-  <div class="grid" id="grid"></div>
-  <canvas id="confetti"></canvas>
-</div>
-<div id="messages"></div>
-<div id="final-question">
+
+<h1>💗 Find the hidden phrase 💗</h1>
+
+<div id="grid"></div>
+
+<div id="message"></div>
+
+<div id="question">
   <p>Will you be my valentine?</p>
-  <button id="yes-btn">Yes</button>
-  <button id="no-btn">No</button>
+  <button id="yes">Yes</button>
+  <button id="no">No</button>
 </div>
+
+<canvas id="confetti"></canvas>
 
 <script>
-// --- Word Search Setup ---
-const phrase = "WILL YOU BE MY VALENTINE".replace(/\s/g,''); // remove spaces
-const gridSize = 8;
-const grid = document.getElementById('grid');
-let gridArray = [];
-const directions = ['horizontal','vertical','diagonal'];
-const selectedCells = [];
-const cellElements = [];
+/* ======================
+   WORD SEARCH SETUP
+====================== */
 
-// Initialize empty grid
-for(let r=0;r<gridSize;r++){
-  gridArray[r]=[];
-  for(let c=0;c<gridSize;c++){
-    gridArray[r][c]='';
+const GRID_SIZE = 10;
+const PHRASE = "WILLYOUBEMYVALENTINE";
+const grid = document.getElementById("grid");
+const message = document.getElementById("message");
+const question = document.getElementById("question");
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+let gridData = Array.from({ length: GRID_SIZE }, () =>
+  Array(GRID_SIZE).fill("")
+);
+
+// Place phrase diagonally (guaranteed fit)
+function placePhrase() {
+  const startRow = 0;
+  const startCol = 0;
+
+  for (let i = 0; i < PHRASE.length; i++) {
+    gridData[startRow + i][startCol + i] = PHRASE[i];
   }
 }
 
-// Place phrase in grid
-function placePhrase(){
-  let placed = false;
-  while(!placed){
-    const dir = directions[Math.floor(Math.random()*directions.length)];
-    let row=0,col=0;
-    if(dir==='horizontal'){
-      row=Math.floor(Math.random()*gridSize);
-      col=Math.floor(Math.random()*(gridSize-phrase.length+1));
-      let fits = true;
-      for(let i=0;i<phrase.length;i++){
-        if(gridArray[row][col+i] && gridArray[row][col+i]!==phrase[i]) fits=false;
-      }
-      if(fits){
-        for(let i=0;i<phrase.length;i++){
-          gridArray[row][col+i]=phrase[i];
-        }
-        placed=true;
-      }
-    } else if(dir==='vertical'){
-      row=Math.floor(Math.random()*(gridSize-phrase.length+1));
-      col=Math.floor(Math.random()*gridSize);
-      let fits = true;
-      for(let i=0;i<phrase.length;i++){
-        if(gridArray[row+i][col] && gridArray[row+i][col]!==phrase[i]) fits=false;
-      }
-      if(fits){
-        for(let i=0;i<phrase.length;i++){
-          gridArray[row+i][col]=phrase[i];
-        }
-        placed=true;
-      }
-    } else if(dir==='diagonal'){
-      row=Math.floor(Math.random()*(gridSize-phrase.length+1));
-      col=Math.floor(Math.random()*(gridSize-phrase.length+1));
-      let fits = true;
-      for(let i=0;i<phrase.length;i++){
-        if(gridArray[row+i][col+i] && gridArray[row+i][col+i]!==phrase[i]) fits=false;
-      }
-      if(fits){
-        for(let i=0;i<phrase.length;i++){
-          gridArray[row+i][col+i]=phrase[i];
-        }
-        placed=true;
-      }
-    }
-  }
-}
-
-// Fill empty cells with random letters
-function fillRandom(){
-  const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  for(let r=0;r<gridSize;r++){
-    for(let c=0;c<gridSize;c++){
-      if(!gridArray[r][c]){
-        gridArray[r][c]=letters[Math.floor(Math.random()*letters.length)];
+// Fill rest with safe random letters
+function fillGrid() {
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      if (gridData[r][c] === "") {
+        gridData[r][c] = letters[Math.floor(Math.random() * letters.length)];
       }
     }
   }
 }
 
 // Render grid
-function renderGrid(){
-  for(let r=0;r<gridSize;r++){
-    for(let c=0;c<gridSize;c++){
-      const cell=document.createElement('div');
-      cell.classList.add('cell');
-      cell.textContent=gridArray[r][c];
-      cell.dataset.row=r;
-      cell.dataset.col=c;
+function renderGrid() {
+  grid.innerHTML = "";
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.textContent = gridData[r][c];
+      cell.dataset.index = r * GRID_SIZE + c;
       grid.appendChild(cell);
-      cellElements.push(cell);
     }
   }
 }
 
 placePhrase();
-fillRandom();
+fillGrid();
 renderGrid();
 
-// --- Selection Logic ---
-let isSelecting=false;
-let currentSelection=[];
+/* ======================
+   SELECTION LOGIC
+====================== */
 
-grid.addEventListener('mousedown',e=>{
-  if(e.target.classList.contains('cell')){
-    isSelecting=true;
-    currentSelection=[e.target];
-    e.target.classList.add('selected');
-  }
+let selecting = false;
+let selected = [];
+
+grid.addEventListener("mousedown", e => {
+  if (!e.target.classList.contains("cell")) return;
+  selecting = true;
+  clearSelection();
+  selectCell(e.target);
 });
 
-grid.addEventListener('mouseover',e=>{
-  if(isSelecting && e.target.classList.contains('cell') && !currentSelection.includes(e.target)){
-    currentSelection.push(e.target);
-    e.target.classList.add('selected');
-  }
+grid.addEventListener("mouseover", e => {
+  if (!selecting || !e.target.classList.contains("cell")) return;
+  selectCell(e.target);
 });
 
-grid.addEventListener('mouseup',e=>{
-  isSelecting=false;
-  checkSelection();
+document.addEventListener("mouseup", () => {
+  selecting = false;
+  checkWord();
 });
 
-function checkSelection(){
-  const selectedWord=currentSelection.map(c=>c.textContent).join('').replace(/\s/g,'');
-  if(selectedWord===phrase){
-    showCompletion();
-  } else {
-    currentSelection.forEach(c=>c.classList.remove('selected'));
-  }
-  currentSelection=[];
+function selectCell(cell) {
+  if (selected.includes(cell)) return;
+  cell.classList.add("active");
+  selected.push(cell);
 }
 
-// --- Completion & Dialogue ---
-const messagesDiv=document.getElementById('messages');
-const finalQuestion=document.getElementById('final-question');
-const yesBtn=document.getElementById('yes-btn');
-const noBtn=document.getElementById('no-btn');
-const confettiCanvas=document.getElementById('confetti');
-const ctx=confettiCanvas.getContext('2d');
-confettiCanvas.width=window.innerWidth;
-confettiCanvas.height=window.innerHeight;
+function clearSelection() {
+  selected.forEach(c => c.classList.remove("active"));
+  selected = [];
+}
 
-function showCompletion(){
-  let seq=[
+function checkWord() {
+  const word = selected.map(c => c.textContent).join("");
+  if (word === PHRASE) {
+    completeGame();
+  } else {
+    clearSelection();
+  }
+}
+
+/* ======================
+   COMPLETION FLOW
+====================== */
+
+function completeGame() {
+  grid.style.display = "none";
+  let messages = [
     "Congratulations Baby!",
     "You found all the words!",
     "Now to complete this you have one last thing to do!"
   ];
-  let i=0;
-  messagesDiv.textContent="";
-  const interval=setInterval(()=>{
-    messagesDiv.textContent=seq[i];
+
+  let i = 0;
+  const interval = setInterval(() => {
+    message.textContent = messages[i];
     i++;
-    if(i>=seq.length){
+    if (i >= messages.length) {
       clearInterval(interval);
-      startConfetti();
-      setTimeout(animatePhraseToQuestion,1000);
+      setTimeout(() => {
+        message.textContent = "";
+        question.style.display = "block";
+        startConfetti();
+      }, 1200);
     }
-  },1500);
+  }, 1500);
 }
 
-// --- Animate letters to form final phrase ---
-function animatePhraseToQuestion(){
-  // Clear grid visually
-  cellElements.forEach(c=>c.style.display='none');
-  messagesDiv.textContent='';
-  
-  // Create new container for letters
-  const container=document.createElement('div');
-  container.id='final-phrase';
-  container.style.display='flex';
-  container.style.flexWrap='wrap';
-  container.style.justifyContent='center';
-  container.style.marginTop='50px';
-  container.style.fontSize='2rem';
-  container.style.fontWeight='bold';
-  container.style.color='#800000';
-  document.getElementById('game-container').appendChild(container);
-  
-  // Create letters as separate spans
-  for(let i=0;i<phrase.length;i++){
-    const span=document.createElement('span');
-    span.textContent=phrase[i];
-    span.style.margin='2px';
-    span.style.transition='all 1s';
-    container.appendChild(span);
-  }
-  
-  // Show final question buttons after 1s
-  setTimeout(()=>{finalQuestion.style.display='block';},1000);
+/* ======================
+   YES / NO BUTTONS
+====================== */
+
+document.getElementById("no").addEventListener("mouseenter", moveNo);
+document.getElementById("no").addEventListener("click", moveNo);
+
+function moveNo() {
+  const btn = document.getElementById("no");
+  btn.style.position = "absolute";
+  btn.style.left = Math.random() * (window.innerWidth - 100) + "px";
+  btn.style.top = Math.random() * (window.innerHeight - 50) + "px";
 }
 
-// --- Yes/No button logic ---
-noBtn.addEventListener('mouseenter', moveNoButton);
-noBtn.addEventListener('click', moveNoButton);
-
-yesBtn.addEventListener('click',()=>{
-  messagesDiv.innerHTML="AWESOME! Now you get to claim your gifts :)<br>Go outside!!";
-  finalQuestion.style.display='none';
+document.getElementById("yes").addEventListener("click", () => {
+  question.style.display = "none";
+  message.innerHTML = `
+    AWESOME! Now you get to claim your gifts :)<br>
+    Go outside!!
+  `;
 });
 
-function moveNoButton(){
-  const maxX=window.innerWidth-noBtn.offsetWidth-20;
-  const maxY=window.innerHeight-noBtn.offsetHeight-20;
-  const x=Math.random()*maxX;
-  const y=Math.random()*maxY;
-  noBtn.style.position='absolute';
-  noBtn.style.left=`${x}px`;
-  noBtn.style.top=`${y}px`;
-}
+/* ======================
+   CONFETTI
+====================== */
 
-// --- Confetti ---
-let confettis=[];
-function startConfetti(){
-  for(let i=0;i<150;i++){
-    confettis.push({
-      x:Math.random()*window.innerWidth,
-      y:Math.random()*-window.innerHeight,
-      r:Math.random()*6+4,
-      d:Math.random()*10+2,
-      color:Math.random()>0.5?'#ffc0cb':'#ffffff',
-      tilt:Math.random()*10-10
+const canvas = document.getElementById("confetti");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let confetti = Array.from({ length: 150 }, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  r: Math.random() * 6 + 4,
+  d: Math.random() * 5 + 2,
+  color: Math.random() > 0.5 ? "#ffc0cb" : "#ffffff"
+}));
+
+function startConfetti() {
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confetti.forEach(c => {
+      ctx.beginPath();
+      ctx.fillStyle = c.color;
+      ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+      ctx.fill();
+      c.y += c.d;
+      if (c.y > canvas.height) c.y = -10;
     });
+    requestAnimationFrame(draw);
   }
-  requestAnimationFrame(drawConfetti);
+  draw();
 }
 
-function drawConfetti(){
-  ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
-  confettis.forEach(c=>{
-    ctx.beginPath();
-    ctx.lineWidth=c.r/2;
-    ctx.strokeStyle=c.color;
-    ctx.moveTo(c.x+c.tilt+c.r/4,c.y);
-    ctx.lineTo(c.x+c.tilt,c.y+c.r);
-    ctx.stroke();
-    c.y+=(Math.cos(c.d)+3+c.r/2)/2;
-    c.x+=Math.sin(0);
-    if(c.y>window.innerHeight){
-      c.y=Math.random()*-20;
-      c.x=Math.random()*window.innerWidth;
-    }
-  });
-  requestAnimationFrame(drawConfetti);
-}
-
-window.addEventListener('resize',()=>{
-  confettiCanvas.width=window.innerWidth;
-  confettiCanvas.height=window.innerHeight;
-});
 </script>
 </body>
 </html>
