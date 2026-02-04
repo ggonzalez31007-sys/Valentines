@@ -222,24 +222,28 @@ function finishGame(){
   },15000);
 }
 
-/* ⭐ LETTER FLY ANIMATION WITH PROPER ORDER AND NO GAPS ⭐ */
+/* ⭐ LETTER FLY WITH PROPORTIONAL SPACING ⭐ */
 function animateSentence(){
   const sentence = "WILL YOU BE MY VALENTINE";
   const foundCells = [...document.querySelectorAll(".cell.found")];
   const used = new Set();
   const targetRect = valentineText.getBoundingClientRect();
 
-  let cursorX = 0; // starting X position for first letter
-  const wordSpacing = 16; // pixels between words
-  const letterSpacing = 28; // pixels between letters in word
+  let cursorX = 0; 
+  const wordSpacing = 16; // space between words
 
-  sentence.split(" ").forEach((word, wIdx)=>{
-    word.split("").forEach(char=>{
-      // find a source letter that hasn’t been used
+  sentence.split(" ").forEach(word => {
+    let lettersWidths = [];
+    // estimate width of each letter (approximate, can be adjusted)
+    word.split("").forEach(ch => lettersWidths.push(32)); // 32px per letter
+
+    // total width of this word
+    const totalWidth = lettersWidths.reduce((a,b)=>a+b,0);
+    
+    word.split("").forEach((char, idx)=>{
       const source = foundCells.find(c=>c.textContent===char && !used.has(c));
       if(!source) return;
       used.add(source);
-
       const start = source.getBoundingClientRect();
       const letter = document.createElement("div");
       letter.className = "flying-letter";
@@ -256,9 +260,10 @@ function animateSentence(){
           `translate(${finalX-start.left}px, ${finalY-start.top}px)`;
       });
 
-      cursorX += letterSpacing;
+      cursorX += lettersWidths[idx]; // move by letter width
     });
-    cursorX += wordSpacing; // add space between words
+
+    cursorX += wordSpacing; // add space after word
   });
 }
 
