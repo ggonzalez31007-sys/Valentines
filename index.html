@@ -17,20 +17,20 @@
   }
 
   #game-container {
-    margin-top: 50px;
+    margin-top: 20px;
     position: relative;
   }
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(25, 30px);
-    grid-template-rows: repeat(1, 30px);
+    grid-template-columns: repeat(8, 40px);
+    grid-template-rows: repeat(8, 40px);
     gap: 2px;
   }
 
   .cell {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     background-color: white;
     display: flex;
     align-items: center;
@@ -39,6 +39,7 @@
     user-select: none;
     cursor: pointer;
     border-radius: 4px;
+    font-size: 1.2rem;
   }
 
   .cell.selected {
@@ -96,146 +97,254 @@
 </div>
 
 <script>
+// --- Word Search Setup ---
 const phrase = "WILL YOU BE MY VALENTINE".replace(/\s/g,''); // remove spaces
+const gridSize = 8;
 const grid = document.getElementById('grid');
-const messagesDiv = document.getElementById('messages');
-const finalQuestion = document.getElementById('final-question');
-const yesBtn = document.getElementById('yes-btn');
-const noBtn = document.getElementById('no-btn');
-const confettiCanvas = document.getElementById('confetti');
-const ctx = confettiCanvas.getContext('2d');
-confettiCanvas.width = window.innerWidth;
-confettiCanvas.height = window.innerHeight;
+let gridArray = [];
+const directions = ['horizontal','vertical','diagonal'];
+const selectedCells = [];
+const cellElements = [];
 
-// Build grid (one row with each letter)
-for (let i = 0; i < phrase.length; i++) {
-  const cell = document.createElement('div');
-  cell.classList.add('cell');
-  cell.textContent = phrase[i];
-  cell.dataset.index = i;
-  grid.appendChild(cell);
+// Initialize empty grid
+for(let r=0;r<gridSize;r++){
+  gridArray[r]=[];
+  for(let c=0;c<gridSize;c++){
+    gridArray[r][c]='';
+  }
 }
 
-let selectedIndices = [];
-
-// Handle letter selection
-grid.addEventListener('mousedown', startSelection);
-grid.addEventListener('mouseover', continueSelection);
-grid.addEventListener('mouseup', endSelection);
-
-let isSelecting = false;
-
-function startSelection(e) {
-  if (!e.target.classList.contains('cell')) return;
-  isSelecting = true;
-  selectedIndices = [];
-  grid.querySelectorAll('.cell').forEach(c => c.classList.remove('selected'));
-  selectCell(e.target);
+// Place phrase in grid
+function placePhrase(){
+  let placed = false;
+  while(!placed){
+    const dir = directions[Math.floor(Math.random()*directions.length)];
+    let row=0,col=0;
+    if(dir==='horizontal'){
+      row=Math.floor(Math.random()*gridSize);
+      col=Math.floor(Math.random()*(gridSize-phrase.length+1));
+      let fits = true;
+      for(let i=0;i<phrase.length;i++){
+        if(gridArray[row][col+i] && gridArray[row][col+i]!==phrase[i]) fits=false;
+      }
+      if(fits){
+        for(let i=0;i<phrase.length;i++){
+          gridArray[row][col+i]=phrase[i];
+        }
+        placed=true;
+      }
+    } else if(dir==='vertical'){
+      row=Math.floor(Math.random()*(gridSize-phrase.length+1));
+      col=Math.floor(Math.random()*gridSize);
+      let fits = true;
+      for(let i=0;i<phrase.length;i++){
+        if(gridArray[row+i][col] && gridArray[row+i][col]!==phrase[i]) fits=false;
+      }
+      if(fits){
+        for(let i=0;i<phrase.length;i++){
+          gridArray[row+i][col]=phrase[i];
+        }
+        placed=true;
+      }
+    } else if(dir==='diagonal'){
+      row=Math.floor(Math.random()*(gridSize-phrase.length+1));
+      col=Math.floor(Math.random()*(gridSize-phrase.length+1));
+      let fits = true;
+      for(let i=0;i<phrase.length;i++){
+        if(gridArray[row+i][col+i] && gridArray[row+i][col+i]!==phrase[i]) fits=false;
+      }
+      if(fits){
+        for(let i=0;i<phrase.length;i++){
+          gridArray[row+i][col+i]=phrase[i];
+        }
+        placed=true;
+      }
+    }
+  }
 }
 
-function continueSelection(e) {
-  if (!isSelecting) return;
-  if (!e.target.classList.contains('cell')) return;
-  selectCell(e.target);
+// Fill empty cells with random letters
+function fillRandom(){
+  const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for(let r=0;r<gridSize;r++){
+    for(let c=0;c<gridSize;c++){
+      if(!gridArray[r][c]){
+        gridArray[r][c]=letters[Math.floor(Math.random()*letters.length)];
+      }
+    }
+  }
 }
 
-function endSelection(e) {
-  isSelecting = false;
-  // check selection
-  const selectedWord = selectedIndices.map(i => phrase[i]).join('');
-  if (selectedWord === phrase) {
+// Render grid
+function renderGrid(){
+  for(let r=0;r<gridSize;r++){
+    for(let c=0;c<gridSize;c++){
+      const cell=document.createElement('div');
+      cell.classList.add('cell');
+      cell.textContent=gridArray[r][c];
+      cell.dataset.row=r;
+      cell.dataset.col=c;
+      grid.appendChild(cell);
+      cellElements.push(cell);
+    }
+  }
+}
+
+placePhrase();
+fillRandom();
+renderGrid();
+
+// --- Selection Logic ---
+let isSelecting=false;
+let currentSelection=[];
+
+grid.addEventListener('mousedown',e=>{
+  if(e.target.classList.contains('cell')){
+    isSelecting=true;
+    currentSelection=[e.target];
+    e.target.classList.add('selected');
+  }
+});
+
+grid.addEventListener('mouseover',e=>{
+  if(isSelecting && e.target.classList.contains('cell') && !currentSelection.includes(e.target)){
+    currentSelection.push(e.target);
+    e.target.classList.add('selected');
+  }
+});
+
+grid.addEventListener('mouseup',e=>{
+  isSelecting=false;
+  checkSelection();
+});
+
+function checkSelection(){
+  const selectedWord=currentSelection.map(c=>c.textContent).join('').replace(/\s/g,'');
+  if(selectedWord===phrase){
     showCompletion();
+  } else {
+    currentSelection.forEach(c=>c.classList.remove('selected'));
   }
+  currentSelection=[];
 }
 
-function selectCell(cell) {
-  const idx = parseInt(cell.dataset.index);
-  if (!selectedIndices.includes(idx)) {
-    selectedIndices.push(idx);
-    cell.classList.add('selected');
-  }
-}
+// --- Completion & Dialogue ---
+const messagesDiv=document.getElementById('messages');
+const finalQuestion=document.getElementById('final-question');
+const yesBtn=document.getElementById('yes-btn');
+const noBtn=document.getElementById('no-btn');
+const confettiCanvas=document.getElementById('confetti');
+const ctx=confettiCanvas.getContext('2d');
+confettiCanvas.width=window.innerWidth;
+confettiCanvas.height=window.innerHeight;
 
-// Completion messages
-function showCompletion() {
-  let seq = [
+function showCompletion(){
+  let seq=[
     "Congratulations Baby!",
     "You found all the words!",
     "Now to complete this you have one last thing to do!"
   ];
-  let i = 0;
-  messagesDiv.textContent = "";
-  const interval = setInterval(() => {
-    messagesDiv.textContent = seq[i];
+  let i=0;
+  messagesDiv.textContent="";
+  const interval=setInterval(()=>{
+    messagesDiv.textContent=seq[i];
     i++;
-    if (i >= seq.length) {
+    if(i>=seq.length){
       clearInterval(interval);
       startConfetti();
-      setTimeout(() => {
-        finalQuestion.style.display = "block";
-      }, 1000);
+      setTimeout(animatePhraseToQuestion,1000);
     }
-  }, 1500);
+  },1500);
 }
 
-// Yes / No button behavior
+// --- Animate letters to form final phrase ---
+function animatePhraseToQuestion(){
+  // Clear grid visually
+  cellElements.forEach(c=>c.style.display='none');
+  messagesDiv.textContent='';
+  
+  // Create new container for letters
+  const container=document.createElement('div');
+  container.id='final-phrase';
+  container.style.display='flex';
+  container.style.flexWrap='wrap';
+  container.style.justifyContent='center';
+  container.style.marginTop='50px';
+  container.style.fontSize='2rem';
+  container.style.fontWeight='bold';
+  container.style.color='#800000';
+  document.getElementById('game-container').appendChild(container);
+  
+  // Create letters as separate spans
+  for(let i=0;i<phrase.length;i++){
+    const span=document.createElement('span');
+    span.textContent=phrase[i];
+    span.style.margin='2px';
+    span.style.transition='all 1s';
+    container.appendChild(span);
+  }
+  
+  // Show final question buttons after 1s
+  setTimeout(()=>{finalQuestion.style.display='block';},1000);
+}
+
+// --- Yes/No button logic ---
 noBtn.addEventListener('mouseenter', moveNoButton);
 noBtn.addEventListener('click', moveNoButton);
 
-yesBtn.addEventListener('click', () => {
-  messagesDiv.innerHTML = "AWESOME! Now you get to claim your gifts :)<br>Go outside!!";
-  finalQuestion.style.display = "none";
+yesBtn.addEventListener('click',()=>{
+  messagesDiv.innerHTML="AWESOME! Now you get to claim your gifts :)<br>Go outside!!";
+  finalQuestion.style.display='none';
 });
 
-function moveNoButton() {
-  const maxX = window.innerWidth - noBtn.offsetWidth - 20;
-  const maxY = window.innerHeight - noBtn.offsetHeight - 20;
-  const x = Math.random() * maxX;
-  const y = Math.random() * maxY;
-  noBtn.style.position = 'absolute';
-  noBtn.style.left = `${x}px`;
-  noBtn.style.top = `${y}px`;
+function moveNoButton(){
+  const maxX=window.innerWidth-noBtn.offsetWidth-20;
+  const maxY=window.innerHeight-noBtn.offsetHeight-20;
+  const x=Math.random()*maxX;
+  const y=Math.random()*maxY;
+  noBtn.style.position='absolute';
+  noBtn.style.left=`${x}px`;
+  noBtn.style.top=`${y}px`;
 }
 
-// Confetti effect
-let confettis = [];
-function startConfetti() {
-  for (let i=0;i<150;i++){
+// --- Confetti ---
+let confettis=[];
+function startConfetti(){
+  for(let i=0;i<150;i++){
     confettis.push({
-      x: Math.random()*window.innerWidth,
-      y: Math.random()*-window.innerHeight,
-      r: Math.random()*6+4,
-      d: Math.random()*10+2,
-      color: Math.random()>0.5?'#ffc0cb':'#ffffff',
-      tilt: Math.random()*10-10
+      x:Math.random()*window.innerWidth,
+      y:Math.random()*-window.innerHeight,
+      r:Math.random()*6+4,
+      d:Math.random()*10+2,
+      color:Math.random()>0.5?'#ffc0cb':'#ffffff',
+      tilt:Math.random()*10-10
     });
   }
   requestAnimationFrame(drawConfetti);
 }
 
-function drawConfetti() {
+function drawConfetti(){
   ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
   confettis.forEach(c=>{
     ctx.beginPath();
-    ctx.lineWidth = c.r/2;
-    ctx.strokeStyle = c.color;
-    ctx.moveTo(c.x + c.tilt + c.r/4, c.y);
-    ctx.lineTo(c.x + c.tilt, c.y + c.r);
+    ctx.lineWidth=c.r/2;
+    ctx.strokeStyle=c.color;
+    ctx.moveTo(c.x+c.tilt+c.r/4,c.y);
+    ctx.lineTo(c.x+c.tilt,c.y+c.r);
     ctx.stroke();
-    c.y += (Math.cos(c.d)+3+c.r/2)/2;
-    c.x += Math.sin(0);
+    c.y+=(Math.cos(c.d)+3+c.r/2)/2;
+    c.x+=Math.sin(0);
     if(c.y>window.innerHeight){
-      c.y = Math.random()*-20;
-      c.x = Math.random()*window.innerWidth;
+      c.y=Math.random()*-20;
+      c.x=Math.random()*window.innerWidth;
     }
   });
   requestAnimationFrame(drawConfetti);
 }
 
-// Adjust canvas on resize
-window.addEventListener('resize', () => {
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
+window.addEventListener('resize',()=>{
+  confettiCanvas.width=window.innerWidth;
+  confettiCanvas.height=window.innerHeight;
 });
 </script>
 </body>
