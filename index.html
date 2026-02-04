@@ -222,7 +222,7 @@ function finishGame(){
   },15000);
 }
 
-/* ⭐ LETTER FLY WITH PROPORTIONAL SPACING ⭐ */
+/* ⭐ LETTER FLY WITH FINAL PROPORTIONAL SPACING ⭐ */
 function animateSentence(){
   const sentence = "WILL YOU BE MY VALENTINE";
   const foundCells = [...document.querySelectorAll(".cell.found")];
@@ -232,15 +232,18 @@ function animateSentence(){
   let cursorX = 0; 
   const wordSpacing = 16; // space between words
 
-  sentence.split(" ").forEach(word => {
-    let lettersWidths = [];
-    // estimate width of each letter (approximate, can be adjusted)
-    word.split("").forEach(ch => lettersWidths.push(32)); // 32px per letter
+  // manual per-letter spacing for proportional look
+  const letterSpacingMap = {
+    "WILL":[32,22,28,28],        // W I L L
+    "YOU":[28,28,28],            // Y O U
+    "BE":[28,28],
+    "MY":[28,28],
+    "VALENTINE":[28,28,28,28,28,28,28,28,28] // V A L E N T I N E
+  };
 
-    // total width of this word
-    const totalWidth = lettersWidths.reduce((a,b)=>a+b,0);
-    
-    word.split("").forEach((char, idx)=>{
+  sentence.split(" ").forEach(word=>{
+    const spacings = letterSpacingMap[word];
+    word.split("").forEach((char,idx)=>{
       const source = foundCells.find(c=>c.textContent===char && !used.has(c));
       if(!source) return;
       used.add(source);
@@ -260,10 +263,9 @@ function animateSentence(){
           `translate(${finalX-start.left}px, ${finalY-start.top}px)`;
       });
 
-      cursorX += lettersWidths[idx]; // move by letter width
+      cursorX += spacings[idx];
     });
-
-    cursorX += wordSpacing; // add space after word
+    cursorX += wordSpacing; 
   });
 }
 
