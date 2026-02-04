@@ -226,38 +226,53 @@ function finishGame(){
 
 /* ================= LETTER ANIMATION ================= */
 function animateSentence(){
-  const sentence="WILL YOU BE MY VALENTINE";
-  const cells=[...document.querySelectorAll(".cell.found")];
-  let usedCells=[];
+  const sentence = "WILL YOU BE MY VALENTINE";
+  const foundCells = [...document.querySelectorAll(".cell.found")];
 
-  const targetRect=valentineText.getBoundingClientRect();
-  let xOffset=0;
+  const targetRect = valentineText.getBoundingClientRect();
 
-  sentence.split("").forEach(ch=>{
-    if(ch===" "){ xOffset+=18; return; }
-    const src=cells.find(c=>c.textContent===ch && !usedCells.includes(c));
-    if(!src) return;
-    usedCells.push(src);
+  let usedCells = new Set();
+  let cursorX = 0;
 
-    const r=src.getBoundingClientRect();
-    const f=document.createElement("div");
-    f.className="flying-letter";
-    f.textContent=ch;
-    f.style.left=r.left+"px";
-    f.style.top=r.top+"px";
-    document.body.appendChild(f);
+  sentence.split("").forEach((char) => {
+    if (char === " ") {
+      cursorX += 18; // reserve space for spaces
+      return;
+    }
 
-    requestAnimationFrame(()=>{
-      f.style.transform=`translate(${targetRect.left + xOffset - r.left}px, ${targetRect.top - r.top}px)`;
+    // find ONE unused matching letter from the grid
+    const source = foundCells.find(
+      c => c.textContent === char && !usedCells.has(c)
+    );
+    if (!source) return;
+
+    usedCells.add(source);
+
+    const start = source.getBoundingClientRect();
+
+    const flyer = document.createElement("div");
+    flyer.className = "flying-letter";
+    flyer.textContent = char;
+    flyer.style.left = start.left + "px";
+    flyer.style.top = start.top + "px";
+
+    document.body.appendChild(flyer);
+
+    const targetX = targetRect.left + cursorX;
+    const targetY = targetRect.top;
+
+    requestAnimationFrame(() => {
+      flyer.style.transform =
+        `translate(${targetX - start.left}px, ${targetY - start.top}px)`;
     });
 
-    xOffset+=26;
+    cursorX += 26; // advance cursor for next letter
   });
 
-  setTimeout(()=>{
-    valentineText.textContent="Will you be my valentine?";
-    question.style.display="block";
-  },1300);
+  setTimeout(() => {
+    valentineText.textContent = "Will you be my valentine?";
+    question.style.display = "block";
+  }, 1300);
 }
 
 /* ================= YES / NO ================= */
