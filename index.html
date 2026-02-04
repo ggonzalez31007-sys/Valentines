@@ -2,277 +2,295 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Valentine 💖</title>
+<title>Leslie's Valentine's Game 💖</title>
+
 <style>
   body {
     margin: 0;
+    background: #ffc0cb;
     font-family: Arial, sans-serif;
-    background: #f6b7d2;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     height: 100vh;
+    overflow: hidden;
   }
 
-  .container {
-    background: white;
-    border: 8px solid #ff69b4;
-    padding: 20px;
-    display: flex;
-    gap: 30px;
+  h1 {
+    color: #8b0000;
+    text-align: center;
+    margin-top: 20px;
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(10, 40px);
-    grid-template-rows: repeat(10, 40px);
-    gap: 2px;
-    background: white;
-  }
-
-  .cell {
-    width: 40px;
-    height: 40px;
-    border: 1px solid #ddd;
+  #game {
     display: flex;
     justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    user-select: none;
-    font-weight: bold;
+    align-items: flex-start;
+    gap: 30px;
+    margin-top: 30px;
   }
 
-  .cell.active {
-    background: pink;
-  }
-
-  .cell.found {
-    background: #ffb6c1;
-  }
-
-  .right {
-    width: 260px;
+  #grid-wrapper {
+    background: white;
+    padding: 16px;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(255,105,180,0.5);
     position: relative;
   }
 
-  #dialogue {
-    font-size: 18px;
-    min-height: 80px;
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(10, 42px);
+    grid-template-rows: repeat(10, 42px);
+    gap: 4px;
+    background: #ff69b4;
+    padding: 10px;
+    border-radius: 14px;
   }
 
-  #finalSentence {
-    margin-top: 20px;
-    font-size: 22px;
+  .cell {
+    width: 42px;
+    height: 42px;
+    background: white;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
     font-weight: bold;
+    color: #8b0000;
+    cursor: pointer;
+    user-select: none;
   }
 
-  .buttons {
+  .cell.active { background: #ffb6c1; }
+  .cell.found { background: #ff69b4; color: white; }
+
+  #side {
+    width: 340px;
+    min-height: 300px;
+    color: #8b0000;
+    font-size: 22px;
+  }
+
+  #question {
+    display: none;
     margin-top: 20px;
+    position: relative;
+  }
+
+  #valentine-text {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 20px;
   }
 
   button {
+    padding: 12px 22px;
     font-size: 18px;
-    padding: 10px 20px;
-    margin-right: 10px;
+    border: none;
+    border-radius: 12px;
     cursor: pointer;
+    background: #ff69b4;
+    color: white;
+    margin-right: 10px;
   }
 
-  #yes, #no {
-    display: none;
+  .flying-letter {
+    position: absolute;
+    font-size: 24px;
+    font-weight: bold;
+    color: #8b0000;
+    transition: transform 1.2s ease-in-out;
+    pointer-events: none;
+  }
+
+  canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
   }
 </style>
 </head>
+
 <body>
 
-<div class="container">
-  <div class="grid" id="grid"></div>
+<h1>💗 Find the hidden words 💗</h1>
 
-  <div class="right">
-    <div id="dialogue"></div>
-    <div id="finalSentence"></div>
-    <div class="buttons">
+<div id="game">
+  <div id="grid-wrapper">
+    <div id="grid"></div>
+  </div>
+
+  <div id="side">
+    <div id="message">Find all the words 💕</div>
+
+    <div id="question">
+      <div id="valentine-text"></div>
       <button id="yes">Yes</button>
       <button id="no">No</button>
     </div>
   </div>
 </div>
 
-<script>
-/* =========================
-   WORD SEARCH SETUP
-========================= */
-const WORDS = [
-  "WILL",
-  "YOU",
-  "BE",
-  "MY",
-  "VALENTINE"
-];
+<canvas id="confetti"></canvas>
 
-const SIZE = 10;
-const gridEl = document.getElementById("grid");
-let grid = [];
-let selected = [];
+<script>
+const GRID_SIZE = 10;
+const WORDS = ["WILL", "YOU", "BE", "MY", "VALENTINE"];
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const directions = [[1,0],[0,1],[1,1]];
+
+const grid = document.getElementById("grid");
+const message = document.getElementById("message");
+const question = document.getElementById("question");
+const valentineText = document.getElementById("valentine-text");
+
+let gridData = Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(""));
 let foundWords = new Set();
 
-/* =========================
-   GRID GENERATION
-========================= */
-function emptyGrid() {
-  return Array.from({ length: SIZE }, () =>
-    Array.from({ length: SIZE }, () => "")
-  );
-}
-
 function placeWord(word) {
-  const dirs = [
-    [1,0], [0,1], [1,1]
-  ];
-
-  while (true) {
-    const [dx, dy] = dirs[Math.floor(Math.random() * dirs.length)];
-    const x = Math.floor(Math.random() * SIZE);
-    const y = Math.floor(Math.random() * SIZE);
-
-    if (
-      x + dx * word.length >= SIZE ||
-      y + dy * word.length >= SIZE
-    ) continue;
-
-    let fits = true;
-    for (let i = 0; i < word.length; i++) {
-      const c = grid[y + dy*i][x + dx*i];
-      if (c && c !== word[i]) fits = false;
+  for (let a=0; a<100; a++) {
+    const [dx,dy] = directions[Math.floor(Math.random()*directions.length)];
+    const r = Math.floor(Math.random()*GRID_SIZE);
+    const c = Math.floor(Math.random()*GRID_SIZE);
+    if (r+dy*(word.length-1)>=GRID_SIZE || c+dx*(word.length-1)>=GRID_SIZE) continue;
+    let ok=true;
+    for (let i=0;i<word.length;i++) {
+      const ch=gridData[r+dy*i][c+dx*i];
+      if (ch && ch!==word[i]) ok=false;
     }
-    if (!fits) continue;
-
-    for (let i = 0; i < word.length; i++) {
-      grid[y + dy*i][x + dx*i] = word[i];
-    }
-    break;
+    if (!ok) continue;
+    for (let i=0;i<word.length;i++) gridData[r+dy*i][c+dx*i]=word[i];
+    return;
   }
 }
 
-function fillGrid() {
-  grid = emptyGrid();
-  WORDS.forEach(placeWord);
+WORDS.forEach(placeWord);
 
-  for (let y = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++) {
-      if (!grid[y][x]) {
-        grid[y][x] = String.fromCharCode(65 + Math.random() * 26);
-      }
-    }
-  }
+for (let r=0;r<GRID_SIZE;r++)
+  for (let c=0;c<GRID_SIZE;c++)
+    if (!gridData[r][c])
+      gridData[r][c]=letters[Math.floor(Math.random()*letters.length)];
+
+gridData.flat().forEach(l=>{
+  const d=document.createElement("div");
+  d.className="cell";
+  d.textContent=l;
+  grid.appendChild(d);
+});
+
+let selecting=false, selected=[];
+
+grid.addEventListener("mousedown",e=>{
+  if(!e.target.classList.contains("cell"))return;
+  selecting=true; selected=[]; pick(e.target);
+});
+grid.addEventListener("mouseover",e=>{
+  if(selecting && e.target.classList.contains("cell")) pick(e.target);
+});
+document.addEventListener("mouseup",()=>{
+  if(selecting){ selecting=false; check(); }
+});
+
+function pick(c){
+  if(selected.includes(c))return;
+  c.classList.add("active");
+  selected.push(c);
 }
 
-function drawGrid() {
-  gridEl.innerHTML = "";
-  grid.flat().forEach(letter => {
-    const cell = document.createElement("div");
-    cell.className = "cell";
-    cell.textContent = letter;
-    cell.addEventListener("mousedown", () => select(cell));
-    gridEl.appendChild(cell);
-  });
+function clear(){
+  selected.forEach(c=>c.classList.remove("active"));
+  selected=[];
 }
 
-fillGrid();
-drawGrid();
-
-/* =========================
-   SELECTION LOGIC
-========================= */
-function select(cell) {
-  if (selected.includes(cell)) return;
-  cell.classList.add("active");
-  selected.push(cell);
-
-  const word = selected.map(c => c.textContent).join("");
-  if (WORDS.includes(word) && !foundWords.has(word)) {
-    foundWords.add(word);
-    selected.forEach(c => {
+function check(){
+  const word=selected.map(c=>c.textContent).join("");
+  if(WORDS.includes(word) && !foundWords.has(word)){
+    selected.forEach(c=>{
       c.classList.remove("active");
       c.classList.add("found");
     });
-    selected = [];
-    if (foundWords.size === WORDS.length) startEndSequence();
-  }
+    foundWords.add(word);
+    burstConfetti();
+    message.textContent=`Found: ${word} 💖`;
+    if(foundWords.size===WORDS.length) finishGame();
+  } else clear();
 }
 
-document.addEventListener("mouseup", () => {
-  selected.forEach(c => c.classList.remove("active"));
-  selected = [];
-});
-
-/* =========================
-   END SEQUENCE
-========================= */
-const dialogue = document.getElementById("dialogue");
-const sentence = document.getElementById("finalSentence");
-const yesBtn = document.getElementById("yes");
-const noBtn = document.getElementById("no");
-
-function startEndSequence() {
-  dialogue.textContent = "Congratulations Baby! 💖";
-
-  setTimeout(() => dialogue.textContent = "You found all the words!", 5000);
-  setTimeout(() => dialogue.textContent = "Now to complete this you have one last thing to do!", 10000);
-  setTimeout(animateLetters, 15000);
+function finishGame(){
+  message.innerHTML=`
+    Congratulations Baby! 💕<br>
+    You found all the words!<br>
+    Now to complete this you have one last thing to do!
+  `;
+  setTimeout(animateSentence, 2000);
 }
 
-/* =========================
-   LETTER ANIMATION
-========================= */
-function animateLetters() {
-  const phrase = "WILL YOU BE MY VALENTINE";
-  sentence.textContent = phrase;
+/* LETTER FLY ANIMATION */
+function animateSentence(){
+  const sentence="WILL YOU BE MY VALENTINE";
+  const cells=[...document.querySelectorAll(".cell")];
+  const startCells=cells.filter(c=>sentence.includes(c.textContent));
+  const targetX=valentineText.getBoundingClientRect().left;
+  const targetY=valentineText.getBoundingClientRect().top;
 
-  const target = sentence.getBoundingClientRect();
-  let cursorX = target.left;
-
-  document.querySelectorAll(".cell.found").forEach(cell => {
-    const rect = cell.getBoundingClientRect();
-    const clone = cell.cloneNode(true);
-    clone.style.position = "fixed";
-    clone.style.left = rect.left + "px";
-    clone.style.top = rect.top + "px";
-    clone.style.transition = "transform 1.2s ease";
-    clone.style.zIndex = 999;
-    document.body.appendChild(clone);
-
-    requestAnimationFrame(() => {
-      clone.style.transform = `translate(${cursorX - rect.left}px, ${target.top - rect.top}px)`;
+  let xOffset=0;
+  sentence.split("").forEach((ch,i)=>{
+    if(ch===" "){ xOffset+=18; return; }
+    const src=startCells.find(c=>c.textContent===ch);
+    if(!src)return;
+    const r=src.getBoundingClientRect();
+    const f=document.createElement("div");
+    f.className="flying-letter";
+    f.textContent=ch;
+    f.style.left=r.left+"px";
+    f.style.top=r.top+"px";
+    document.body.appendChild(f);
+    requestAnimationFrame(()=>{
+      f.style.transform=`translate(${targetX + xOffset - r.left}px, ${targetY - r.top}px)`;
     });
-
-    cursorX += 22;
-    setTimeout(() => clone.remove(), 1300);
+    xOffset+=24;
   });
 
-  setTimeout(showButtons, 1400);
+  setTimeout(()=>{
+    valentineText.textContent="Will you be my valentine?";
+    question.style.display="block";
+  },1300);
 }
 
-/* =========================
-   YES / NO
-========================= */
-function showButtons() {
-  yesBtn.style.display = "inline-block";
-  noBtn.style.display = "inline-block";
+/* YES / NO */
+document.getElementById("no").addEventListener("mouseenter",moveNo);
+document.getElementById("no").addEventListener("click",moveNo);
+function moveNo(){
+  const b=document.getElementById("no");
+  b.style.position="absolute";
+  b.style.left=Math.random()*(window.innerWidth-120)+"px";
+  b.style.top=Math.random()*(window.innerHeight-60)+"px";
 }
-
-noBtn.addEventListener("mouseenter", () => {
-  noBtn.style.position = "fixed";
-  noBtn.style.left = Math.random() * (window.innerWidth - 100) + "px";
-  noBtn.style.top = Math.random() * (window.innerHeight - 40) + "px";
+document.getElementById("yes").addEventListener("click",()=>{
+  question.style.display="none";
+  message.innerHTML="AWESOME! Now you get to claim your gifts :)<br>Go outside!!";
 });
 
-yesBtn.addEventListener("click", () => {
-  yesBtn.style.display = "none";
-  noBtn.style.display = "none";
-
-  dialogue.textContent = "AWESOME! Now you get to claim your gifts :)";
-  setTimeout(() => dialogue.textContent = "Go outside!! 💕", 5000);
-});
+/* CONFETTI */
+const canvas=document.getElementById("confetti");
+const ctx=canvas.getContext("2d");
+canvas.width=innerWidth; canvas.height=innerHeight;
+let confetti=[];
+function burstConfetti(){
+  for(let i=0;i<40;i++)
+    confetti.push({x:Math.random()*canvas.width,y:0,r:4+Math.random()*4,d:2+Math.random()*4,c:Math.random()>0.5?"#ffc0cb":"#fff"});
+}
+(function loop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  confetti.forEach((c,i)=>{
+    ctx.fillStyle=c.c;
+    ctx.beginPath();
+    ctx.arc(c.x,c.y,c.r,0,Math.PI*2);
+    ctx.fill();
+    c.y+=c.d;
+    if(c.y>canvas.height) confetti.splice(i,1);
+  });
+  requestAnimationFrame(loop);
+})();
 </script>
 
 </body>
