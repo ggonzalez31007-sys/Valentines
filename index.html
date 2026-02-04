@@ -21,6 +21,16 @@
     margin-top: 20px;
   }
 
+  /* WHITE CONTAINER */
+  #grid-wrapper {
+    background: white;
+    padding: 16px;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(255,105,180,0.5);
+    margin-top: 20px;
+  }
+
+  /* PINK BORDER AROUND GRID */
   #grid {
     display: grid;
     grid-template-columns: repeat(10, 42px);
@@ -28,8 +38,7 @@
     gap: 4px;
     background: #ff69b4;
     padding: 10px;
-    border-radius: 16px;
-    margin-top: 20px;
+    border-radius: 14px;
   }
 
   .cell {
@@ -93,7 +102,9 @@
 
 <h1>💗 Find the hidden phrase 💗</h1>
 
-<div id="grid"></div>
+<div id="grid-wrapper">
+  <div id="grid"></div>
+</div>
 
 <div id="message"></div>
 
@@ -121,17 +132,14 @@ let gridData = Array.from({ length: GRID_SIZE }, () =>
   Array(GRID_SIZE).fill("")
 );
 
-// Place phrase diagonally (guaranteed fit)
+// Place phrase diagonally
 function placePhrase() {
-  const startRow = 0;
-  const startCol = 0;
-
   for (let i = 0; i < PHRASE.length; i++) {
-    gridData[startRow + i][startCol + i] = PHRASE[i];
+    gridData[i][i] = PHRASE[i];
   }
 }
 
-// Fill rest with safe random letters
+// Fill remaining cells
 function fillGrid() {
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
@@ -142,7 +150,7 @@ function fillGrid() {
   }
 }
 
-// Render grid
+// Render
 function renderGrid() {
   grid.innerHTML = "";
   for (let r = 0; r < GRID_SIZE; r++) {
@@ -150,7 +158,6 @@ function renderGrid() {
       const cell = document.createElement("div");
       cell.className = "cell";
       cell.textContent = gridData[r][c];
-      cell.dataset.index = r * GRID_SIZE + c;
       grid.appendChild(cell);
     }
   }
@@ -209,8 +216,9 @@ function checkWord() {
 ====================== */
 
 function completeGame() {
-  grid.style.display = "none";
-  let messages = [
+  document.getElementById("grid-wrapper").style.display = "none";
+
+  const messages = [
     "Congratulations Baby!",
     "You found all the words!",
     "Now to complete this you have one last thing to do!"
@@ -232,7 +240,7 @@ function completeGame() {
 }
 
 /* ======================
-   YES / NO BUTTONS
+   YES / NO
 ====================== */
 
 document.getElementById("no").addEventListener("mouseenter", moveNo);
@@ -285,7 +293,7 @@ function startConfetti() {
   }
   draw();
 }
-
 </script>
+
 </body>
 </html>
