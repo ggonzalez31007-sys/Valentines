@@ -222,17 +222,23 @@ function finishGame(){
   },15000);
 }
 
-/* ⭐ FINAL LETTER ASSEMBLY (TIGHTER SPACING) ⭐ */
+/* ⭐ FINAL LETTER ASSEMBLY WITH KERNING ⭐ */
 function animateSentence(){
   const sentence = "WILL YOU BE MY VALENTINE";
   const foundCells = [...document.querySelectorAll(".cell.found")];
   const used = new Set();
-
   const targetRect = valentineText.getBoundingClientRect();
+
+  // Custom spacing per letter for kerning
+  const spacingMap = {
+    W:28,I:24,L:22,Y:26,O:24,U:26,B:24,E:24,M:26,Y_:26,
+    V:26,A:24,L_:22,E_:24,N:24,T:24,I_:24,N_:24,E_:24
+  };
+
   let cursorX = 0;
 
   sentence.split("").forEach(char=>{
-    if(char===" "){ cursorX+=14; return; } // tighter space between words
+    if(char===" "){ cursorX+=14; return; }
 
     const source = foundCells.find(c=>c.textContent===char && !used.has(c));
     if(!source) return;
@@ -254,7 +260,8 @@ function animateSentence(){
         `translate(${finalX-start.left}px, ${finalY-start.top}px)`;
     });
 
-    cursorX += 24; // tighter normal letter spacing
+    // Pick spacing: default 24px if not in map
+    cursorX += spacingMap[char] || 24;
   });
 }
 
