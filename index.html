@@ -223,51 +223,50 @@ function finishGame(){
 }
 
 /* ⭐ LETTER FLY WITH PROPORTIONAL FINAL SPACING ⭐ */
-function animateSentence(){
+function animateSentence() {
   const sentence = "WILL YOU BE MY VALENTINE";
   const foundCells = [...document.querySelectorAll(".cell.found")];
   const used = new Set();
   const targetRect = valentineText.getBoundingClientRect();
 
-  let cursorX = 0; 
-  const wordSpacing = 14;
+  let cursorX = 0; // starting X position for the first letter
+  const wordSpacing = 8; // space between words
 
-  // Adjusted letter spacing: final visual look based on your screenshot
-  const letterSpacingMap = {
-    "WILL":[32,26,25,25],        // LL slightly closer to WI
-    "YOU":[28,28,28],
-    "BE":[28,28],
-    "MY":[28,28],
-    "VALENTINE":[26,26,26,26,26,26,26,22,22] // NE much closer to VALENTI
-  };
-
-  sentence.split(" ").forEach(word=>{
-    const spacings = letterSpacingMap[word];
-    word.split("").forEach((char,idx)=>{
-      const source = foundCells.find(c=>c.textContent===char && !used.has(c));
-      if(!source) return;
+  sentence.split(" ").forEach(word => {
+    word.split("").forEach(char => {
+      // find the next matching cell that hasn't been used
+      const source = foundCells.find(c => c.textContent === char && !used.has(c));
+      if (!source) return;
       used.add(source);
+
       const start = source.getBoundingClientRect();
       const letter = document.createElement("div");
       letter.className = "flying-letter";
       letter.textContent = char;
-      letter.style.left = start.left+"px";
-      letter.style.top = start.top+"px";
+      letter.style.left = start.left + "px";
+      letter.style.top = start.top + "px";
       document.body.appendChild(letter);
+
+      // Measure width of letter to determine spacing
+      const letterWidth = letter.offsetWidth;
 
       const finalX = targetRect.left + cursorX;
       const finalY = targetRect.top;
 
-      requestAnimationFrame(()=>{
-        letter.style.transform =
-          `translate(${finalX-start.left}px, ${finalY-start.top}px)`;
+      // Animate the letter
+      requestAnimationFrame(() => {
+        letter.style.transform = `translate(${finalX - start.left}px, ${finalY - start.top}px)`;
       });
 
-      cursorX += spacings[idx];
+      // Advance cursor by letter width minus a small gap (-2px) so letters almost touch
+      cursorX += letterWidth - 2;
     });
-    cursorX += wordSpacing; 
+
+    // Add small space between words
+    cursorX += wordSpacing;
   });
 }
+
 
 /* YES / NO */
 const noBtn=document.getElementById("no");
