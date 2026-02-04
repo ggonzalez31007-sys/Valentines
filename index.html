@@ -222,21 +222,20 @@ function finishGame(){
   },15000);
 }
 
-/* ⭐ FLYING LETTERS WITH BALANCED SPACING ⭐ */
+/* ⭐ LETTER FLY ANIMATION WITH PROPER ORDER AND NO GAPS ⭐ */
 function animateSentence(){
   const sentence = "WILL YOU BE MY VALENTINE";
   const foundCells = [...document.querySelectorAll(".cell.found")];
   const used = new Set();
   const targetRect = valentineText.getBoundingClientRect();
 
-  const words = sentence.split(" ");
-  let cursorX = 0;
+  let cursorX = 0; // starting X position for first letter
+  const wordSpacing = 16; // pixels between words
+  const letterSpacing = 28; // pixels between letters in word
 
-  words.forEach((word, wIdx)=>{
-    const wordLen = word.length;
-    const letterSpacing = 28; // even spacing for letters within the word
-
+  sentence.split(" ").forEach((word, wIdx)=>{
     word.split("").forEach(char=>{
+      // find a source letter that hasn’t been used
       const source = foundCells.find(c=>c.textContent===char && !used.has(c));
       if(!source) return;
       used.add(source);
@@ -259,8 +258,7 @@ function animateSentence(){
 
       cursorX += letterSpacing;
     });
-
-    cursorX += 16; // space between words
+    cursorX += wordSpacing; // add space between words
   });
 }
 
