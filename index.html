@@ -223,20 +223,20 @@ function finishGame(){
 }
 
 /* ⭐ LETTER FLY WITH PROPORTIONAL FINAL SPACING ⭐ */
-function animateSentence() {
+function animateSentence(){
   const sentence = "WILL YOU BE MY VALENTINE";
   const foundCells = [...document.querySelectorAll(".cell.found")];
   const used = new Set();
   const targetRect = valentineText.getBoundingClientRect();
 
-  let cursorX = 0; // starting X position for the first letter
+  let cursorX = 0;
   const wordSpacing = 8; // space between words
 
   sentence.split(" ").forEach(word => {
     word.split("").forEach(char => {
-      // find the next matching cell that hasn't been used
+      // find the next unused cell that has this letter
       const source = foundCells.find(c => c.textContent === char && !used.has(c));
-      if (!source) return;
+      if(!source) return; // skip if not found
       used.add(source);
 
       const start = source.getBoundingClientRect();
@@ -247,25 +247,20 @@ function animateSentence() {
       letter.style.top = start.top + "px";
       document.body.appendChild(letter);
 
-      // Measure width of letter to determine spacing
       const letterWidth = letter.offsetWidth;
-
       const finalX = targetRect.left + cursorX;
       const finalY = targetRect.top;
 
-      // Animate the letter
       requestAnimationFrame(() => {
         letter.style.transform = `translate(${finalX - start.left}px, ${finalY - start.top}px)`;
       });
 
-      // Advance cursor by letter width minus a small gap (-2px) so letters almost touch
-      cursorX += letterWidth - 2;
+      cursorX += letterWidth - 2; // tight spacing
     });
-
-    // Add small space between words
     cursorX += wordSpacing;
   });
 }
+
 
 
 /* YES / NO */
