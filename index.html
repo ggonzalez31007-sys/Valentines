@@ -94,12 +94,13 @@
   }
 
   .flying-letter {
-    position: absolute;
+    position: fixed;
     font-size: 24px;
     font-weight: bold;
     color: #8b0000;
     transition: transform 1.2s ease-in-out;
     pointer-events: none;
+    z-index: 999;
   }
 
   canvas {
@@ -133,8 +134,9 @@
 <canvas id="confetti"></canvas>
 
 <script>
+/* ================= GRID ================= */
 const GRID_SIZE = 10;
-const WORDS = ["WILL", "YOU", "BE", "MY", "VALENTINE"];
+const WORDS = ["WILL","YOU","BE","MY","VALENTINE"];
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const directions = [[1,0],[0,1],[1,1]];
 
@@ -143,31 +145,31 @@ const message = document.getElementById("message");
 const question = document.getElementById("question");
 const valentineText = document.getElementById("valentine-text");
 
-let gridData = Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(""));
+let gridData = Array.from({length:GRID_SIZE},()=>Array(GRID_SIZE).fill(""));
 let foundWords = new Set();
 
-function placeWord(word) {
-  for (let a=0; a<100; a++) {
-    const [dx,dy] = directions[Math.floor(Math.random()*directions.length)];
-    const r = Math.floor(Math.random()*GRID_SIZE);
-    const c = Math.floor(Math.random()*GRID_SIZE);
-    if (r+dy*(word.length-1)>=GRID_SIZE || c+dx*(word.length-1)>=GRID_SIZE) continue;
+/* ================= WORD PLACEMENT ================= */
+function placeWord(word){
+  for(let t=0;t<100;t++){
+    const [dx,dy]=directions[Math.floor(Math.random()*directions.length)];
+    const r=Math.floor(Math.random()*GRID_SIZE);
+    const c=Math.floor(Math.random()*GRID_SIZE);
+    if(r+dy*(word.length-1)>=GRID_SIZE||c+dx*(word.length-1)>=GRID_SIZE)continue;
     let ok=true;
-    for (let i=0;i<word.length;i++) {
+    for(let i=0;i<word.length;i++){
       const ch=gridData[r+dy*i][c+dx*i];
-      if (ch && ch!==word[i]) ok=false;
+      if(ch&&ch!==word[i]) ok=false;
     }
-    if (!ok) continue;
-    for (let i=0;i<word.length;i++) gridData[r+dy*i][c+dx*i]=word[i];
+    if(!ok)continue;
+    for(let i=0;i<word.length;i++) gridData[r+dy*i][c+dx*i]=word[i];
     return;
   }
 }
 
 WORDS.forEach(placeWord);
-
-for (let r=0;r<GRID_SIZE;r++)
-  for (let c=0;c<GRID_SIZE;c++)
-    if (!gridData[r][c])
+for(let r=0;r<GRID_SIZE;r++)
+  for(let c=0;c<GRID_SIZE;c++)
+    if(!gridData[r][c])
       gridData[r][c]=letters[Math.floor(Math.random()*letters.length)];
 
 gridData.flat().forEach(l=>{
@@ -177,8 +179,8 @@ gridData.flat().forEach(l=>{
   grid.appendChild(d);
 });
 
+/* ================= SELECTION ================= */
 let selecting=false, selected=[];
-
 grid.addEventListener("mousedown",e=>{
   if(!e.target.classList.contains("cell"))return;
   selecting=true; selected=[]; pick(e.target);
@@ -196,47 +198,47 @@ function pick(c){
   selected.push(c);
 }
 
-function clear(){
+function clearSel(){
   selected.forEach(c=>c.classList.remove("active"));
   selected=[];
 }
 
 function check(){
   const word=selected.map(c=>c.textContent).join("");
-  if(WORDS.includes(word) && !foundWords.has(word)){
+  if(WORDS.includes(word)&&!foundWords.has(word)){
     selected.forEach(c=>{
       c.classList.remove("active");
       c.classList.add("found");
     });
     foundWords.add(word);
     burstConfetti();
-    message.textContent=`Found: ${word} 💖`;
     if(foundWords.size===WORDS.length) finishGame();
-  } else clear();
+  } else clearSel();
 }
 
+/* ================= END SEQUENCE ================= */
 function finishGame(){
-  message.innerHTML=`
-    Congratulations Baby! 💕<br>
-    You found all the words!<br>
-    Now to complete this you have one last thing to do!
-  `;
-  setTimeout(animateSentence, 2000);
+  message.textContent="Congratulations Baby! 💕";
+  setTimeout(()=>message.textContent="You found all the words!",5000);
+  setTimeout(()=>message.textContent="Now to complete this you have one last thing to do!",10000);
+  setTimeout(animateSentence,15000);
 }
 
-/* LETTER FLY ANIMATION */
+/* ================= LETTER ANIMATION ================= */
 function animateSentence(){
   const sentence="WILL YOU BE MY VALENTINE";
-  const cells=[...document.querySelectorAll(".cell")];
-  const startCells=cells.filter(c=>sentence.includes(c.textContent));
-  const targetX=valentineText.getBoundingClientRect().left;
-  const targetY=valentineText.getBoundingClientRect().top;
+  const cells=[...document.querySelectorAll(".cell.found")];
+  let usedCells=[];
 
+  const targetRect=valentineText.getBoundingClientRect();
   let xOffset=0;
-  sentence.split("").forEach((ch,i)=>{
+
+  sentence.split("").forEach(ch=>{
     if(ch===" "){ xOffset+=18; return; }
-    const src=startCells.find(c=>c.textContent===ch);
-    if(!src)return;
+    const src=cells.find(c=>c.textContent===ch && !usedCells.includes(c));
+    if(!src) return;
+    usedCells.push(src);
+
     const r=src.getBoundingClientRect();
     const f=document.createElement("div");
     f.className="flying-letter";
@@ -244,10 +246,12 @@ function animateSentence(){
     f.style.left=r.left+"px";
     f.style.top=r.top+"px";
     document.body.appendChild(f);
+
     requestAnimationFrame(()=>{
-      f.style.transform=`translate(${targetX + xOffset - r.left}px, ${targetY - r.top}px)`;
+      f.style.transform=`translate(${targetRect.left + xOffset - r.left}px, ${targetRect.top - r.top}px)`;
     });
-    xOffset+=24;
+
+    xOffset+=26;
   });
 
   setTimeout(()=>{
@@ -256,21 +260,21 @@ function animateSentence(){
   },1300);
 }
 
-/* YES / NO */
-document.getElementById("no").addEventListener("mouseenter",moveNo);
-document.getElementById("no").addEventListener("click",moveNo);
-function moveNo(){
-  const b=document.getElementById("no");
-  b.style.position="absolute";
-  b.style.left=Math.random()*(window.innerWidth-120)+"px";
-  b.style.top=Math.random()*(window.innerHeight-60)+"px";
-}
-document.getElementById("yes").addEventListener("click",()=>{
-  question.style.display="none";
-  message.innerHTML="AWESOME! Now you get to claim your gifts :)<br>Go outside!!";
+/* ================= YES / NO ================= */
+const noBtn=document.getElementById("no");
+noBtn.addEventListener("mouseenter",()=>{
+  noBtn.style.position="fixed";
+  noBtn.style.left=Math.random()*(window.innerWidth-120)+"px";
+  noBtn.style.top=Math.random()*(window.innerHeight-60)+"px";
 });
 
-/* CONFETTI */
+document.getElementById("yes").addEventListener("click",()=>{
+  question.style.display="none";
+  message.textContent="AWESOME! Now you get to claim your gifts :)";
+  setTimeout(()=>message.textContent="Go outside!! 💕",5000);
+});
+
+/* ================= CONFETTI ================= */
 const canvas=document.getElementById("confetti");
 const ctx=canvas.getContext("2d");
 canvas.width=innerWidth; canvas.height=innerHeight;
