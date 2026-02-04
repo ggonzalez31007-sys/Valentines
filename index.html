@@ -222,7 +222,7 @@ function finishGame(){
   },15000);
 }
 
-/* ⭐ LETTER FLY WITH FINAL PROPORTIONAL SPACING ⭐ */
+/* ⭐ LETTER FLY WITH FINAL TIGHT SPACING ⭐ */
 function animateSentence(){
   const sentence = "WILL YOU BE MY VALENTINE";
   const foundCells = [...document.querySelectorAll(".cell.found")];
@@ -230,15 +230,15 @@ function animateSentence(){
   const targetRect = valentineText.getBoundingClientRect();
 
   let cursorX = 0; 
-  const wordSpacing = 16; // space between words
+  const wordSpacing = 14; // slightly tighter between words
 
-  // manual per-letter spacing for proportional look
+  // fine-tuned per-letter spacing to fit and look good
   const letterSpacingMap = {
-    "WILL":[32,22,28,28],        // W I L L
+    "WILL":[32,26,26,26],        // W I L L
     "YOU":[28,28,28],            // Y O U
     "BE":[28,28],
     "MY":[28,28],
-    "VALENTINE":[28,28,28,28,28,28,28,28,28] // V A L E N T I N E
+    "VALENTINE":[26,24,26,26,26,24,26,26,26] // tighter letters, I & N adjusted
   };
 
   sentence.split(" ").forEach(word=>{
