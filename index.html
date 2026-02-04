@@ -69,7 +69,7 @@
   }
 
   #side {
-    width: 280px;
+    width: 300px;
     min-height: 300px;
     color: #8b0000;
     font-size: 20px;
@@ -131,9 +131,9 @@ const WORDS = ["WILL", "YOU", "BE", "MY", "VALENTINE"];
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 const directions = [
-  [1, 0],
-  [0, 1],
-  [1, 1]
+  [1, 0],   // horizontal
+  [0, 1],   // vertical
+  [1, 1]    // diagonal
 ];
 
 const grid = document.getElementById("grid");
@@ -192,7 +192,7 @@ for (let r = 0; r < GRID_SIZE; r++) {
 }
 
 /* ======================
-   RENDER
+   RENDER GRID
 ====================== */
 
 gridData.flat().forEach(letter => {
@@ -203,7 +203,7 @@ gridData.flat().forEach(letter => {
 });
 
 /* ======================
-   SELECTION
+   SELECTION LOGIC
 ====================== */
 
 let selecting = false;
@@ -228,7 +228,6 @@ document.addEventListener("mouseup", () => {
 });
 
 function select(cell) {
-  if (cell.classList.contains("found")) return;
   if (selected.includes(cell)) return;
   cell.classList.add("active");
   selected.push(cell);
@@ -257,19 +256,31 @@ function checkWord() {
 }
 
 /* ======================
-   END FLOW
+   END DIALOGUE (7s STEPS)
 ====================== */
 
 function finishGame() {
-  setTimeout(() => {
-    message.innerHTML = `
-      Congratulations Baby! 💕<br>
-      You found all the words!<br><br>
-      Now to complete this you have one last thing to do!
-    `;
-    question.style.display = "block";
-    startConfetti();
-  }, 600);
+  const lines = [
+    "Congratulations Baby! 💕",
+    "You found all the words!",
+    "Now to complete this you have one last thing to do!"
+  ];
+
+  let index = 0;
+  message.textContent = "";
+
+  const interval = setInterval(() => {
+    message.textContent = lines[index];
+    index++;
+
+    if (index === lines.length) {
+      clearInterval(interval);
+      setTimeout(() => {
+        question.style.display = "block";
+        startConfetti();
+      }, 7000);
+    }
+  }, 7000);
 }
 
 /* ======================
